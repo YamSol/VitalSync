@@ -1,4 +1,8 @@
-# Oximero - MAX30100
+# Dispositivo de Monitoramento Remoto
+
+## Componentes
+
+### Oximero - MAX30100Módulo
 
 **Assets**:
 - [ESP32 C Lib](https://github.com/aedalzotto/esp32-max30100)
