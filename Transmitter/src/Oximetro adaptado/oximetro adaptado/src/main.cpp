@@ -50,10 +50,10 @@ void loop()
     // Asynchronously dump heart rate and oxidation levels to the serial
     // For both, a value of 0 means "invalid"
     if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-        Serial.print("H:");
+        Serial.print("Frequência Cardíaca: ");
         Serial.println(pox.getHeartRate());
 
-        Serial.print("O:");
+        Serial.print("Saturação de oxigênio: ");
         Serial.println(pox.getSpO2());
 
         tsLastReport = millis();
