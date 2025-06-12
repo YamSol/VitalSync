@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "lm35"
+		},
+		{
+			"name": "Oximetro Teste",
+			"path": "Oximetro Teste"
+		},
+		{
+			"name": "oximetro adaptado",
+			"path": "Oximetro adaptado/oximetro adaptado"
+		},
+		{
+			"name": "LM35PlusOximeter",
+			"path": "OxímetroApapt+LM35/LM35PlusOximeter"
+		}
+	],
+	"settings": {}
+}
