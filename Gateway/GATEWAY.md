@@ -51,9 +51,8 @@ Utilizaremos **AES-128** para criptografar os dados antes de enviá-los. A chave
 
 ## 4. Estrutura do Código Fonte
 
-A estrutura de código do **Gateway** segue o padrão **MVC (Model-View-Controller)**, separando a lógica de controle, visualização e manipulação dos dados.
+A estrutura de código do **Gateway** segue o padrão **MVC (Model-View-Controller)**, separando a lógica de controle, visualização e manipulação dos dados:
 
-### Estrutura de Diretórios:
 ```plaintext
 /src
   ├── /controller           
@@ -68,10 +67,7 @@ A estrutura de código do **Gateway** segue o padrão **MVC (Model-View-Controll
   └── main.cpp              
 ```
 
-## 5. Considerações Finais
 
-- **Conectividade LoRa:** O Gateway deve ser capaz de receber dados dos transmissores a distâncias de até 20 km (em condições ideais) com uso eficiente da largura de banda.
-- **Criptografia:** A utilização de criptografia AES-128 garantirá a segurança dos dados transmitidos.
-- **Uso de PlatformIO:** A plataforma PlatformIO e a biblioteca LoRa permitem uma integração rápida e eficiente com o ESP32 para a implementação de comunicação LoRa.
+[ESP32 DEVKIT V1 - DOIT]
 
-Se precisar de mais informações ou ajustes, estou à disposição!
+<img src="https://mischianti.org/wp-content/uploads/2021/03/ESP32-DOIT-DEV-KIT-v1-pinout-mischianti-1024x501.jpg">
