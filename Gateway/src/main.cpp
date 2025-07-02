@@ -1,117 +1,108 @@
 #include <Arduino.h>
-#include <HardwareSerial.h>
+#include "lora.h"
+#include "network.h"
 
-// Configuração dos pinos do E32-433T20D
-#define E32_TX      16   // Pino TX do ESP32 conectado ao RX do E32
-#define E32_RX      17   // Pino RX do ESP32 conectado ao TX do E32
-#define E32_M0      4    // Pino M0 do E32 (opcional, para configuração)
-#define E32_M1      5    // Pino M1 do E32 (opcional, para configuração)
-#define E32_AUX     2    // Pino AUX do E32 (opcional, para status)
+// Instâncias dos gerenciadores
+LoRaReceiver loraReceiver;
+NetworkManager networkManager;
 
+// Configurações
+#define LED_STATUS 2
+#define WIFI_RETRY_DELAY 30000 // 30 segundos entre tentativas de WiFi
 
-// Cria uma instância de HardwareSerial para comunicação com o E32
-HardwareSerial E32Serial(2);
-
-String receiveData();
-String decryptData(String encryptedData);
-void processReceivedData(String data);
+unsigned long lastWiFiAttempt = 0;
+bool systemReady = false;
 
 void setup() {
-    Serial.begin(115200);  // Inicia a comunicação Serial para debug
-    while (!Serial);
+    Serial.begin(115200);
+    Serial.println("\n" + String("=").substring(0,50));
+    Serial.println("🩺 VitalSync Gateway Iniciando...");
+    Serial.println("" + String("=").substring(0,50));
     
-    // Configura os pinos de controle do E32 (opcional)
-    pinMode(E32_M0, OUTPUT);
-    pinMode(E32_M1, OUTPUT);
-    pinMode(E32_AUX, INPUT);
-
-    // Configura o E32 em modo normal (M0=0, M1=0)
-    digitalWrite(E32_M0, LOW);
-    digitalWrite(E32_M1, LOW);
+    // Configura LED de status
+    pinMode(LED_STATUS, OUTPUT);
+    digitalWrite(LED_STATUS, LOW);
     
-    // Inicializa a comunicação serial com o E32
-    E32Serial.begin(9600, SERIAL_8N1, E32_RX, E32_TX);
+    Serial.println("\n[ETAPA 1] Inicializando módulo LoRa...");
     
-    // Aguarda o módulo E32 ficar pronto
-    delay(1000);
+    // Inicializa receptor LoRa
+    if (loraReceiver.initLoRa()) {
+        Serial.println("✅ LoRa inicializado com sucesso!");
+        systemReady = true;
+        
+        // LED indica sistema pronto
+        digitalWrite(LED_STATUS, HIGH);
+        delay(500);
+        digitalWrite(LED_STATUS, LOW);
+        delay(500);
+        digitalWrite(LED_STATUS, HIGH);
+    } else {
+        Serial.println("❌ Falha na inicialização do LoRa!");
+        systemReady = false;
+    }
     
-    Serial.println("Gateway E32-433T20D iniciado!");
-    Serial.println("Aguardando dados LoRa...");
+    Serial.println("\n[GATEWAY] Sistema pronto - Modo escuta LoRa ativo");
+    Serial.println("Aguardando dados do Transmitter...\n");
 }
 
 void loop() {
-    String receivedData = receiveData();  // Recebe os dados via E32
-    
-    if (receivedData != "") {
-        Serial.println("Dados recebidos: " + receivedData);
-  
-        // Opcional: Processar os dados recebidos
-        processReceivedData(receivedData);
+    if (!systemReady) {
+        Serial.println("Sistema não está pronto. Tentando reinicializar...");
+        delay(5000);
+        ESP.restart();
+        return;
     }
     
-    delay(100);  // Aguarda antes de verificar novamente
+    // [ETAPA 1] Escuta dados via LoRa
+    ReceivedData receivedData = loraReceiver.listenForData();
+    
+    // Se dados válidos foram recebidos
+    if (receivedData.isValid) {
+        Serial.println("\n[ETAPA 2] Dados válidos recebidos!");
+        
+        // Pisca LED para indicar recepção
+        blinkLED(3, 200);
+        
+        // [ETAPA 3] Conecta ao WiFi
+        Serial.println("\n[ETAPA 3] Conectando ao WiFi...");
+        
+        if (networkManager.connectWiFi()) {
+            Serial.println("✅ WiFi conectado!");
+            
+            // [ETAPA 4] Envia dados para API
+            Serial.println("\n[ETAPA 4] Enviando dados para API...");
+            
+            if (networkManager.sendDataToAPI(receivedData)) {
+                Serial.println("\n✅ SUCESSO: Dados enviados para API!");
+                blinkLED(5, 100); // LED rápido = sucesso
+            } else {
+                Serial.println("\n❌ ERRO: Falha no envio para API!");
+                blinkLED(10, 50); // LED muito rápido = erro
+            }
+            
+            // [ETAPA 5] Desconecta WiFi
+            Serial.println("\n[ETAPA 5] Desconectando WiFi...");
+            networkManager.disconnectWiFi();
+            
+        } else {
+            Serial.println("❌ Falha na conexão WiFi!");
+            Serial.println("Tentativa de WiFi adiada por 30 segundos...");
+            lastWiFiAttempt = millis();
+        }
+        
+        Serial.println("\n[GATEWAY] Retornando ao modo escuta LoRa...");
+        Serial.println("" + String("-").substring(0,50) + "\n");
+    }
+    
+    // Pequeno delay para não sobrecarregar o sistema
+    delay(100);
 }
 
-void processReceivedData(String data) {
-    // Função para processar os dados recebidos
-    // Aqui você pode extrair informações específicas, validar dados, etc.
-    
-    Serial.println("--- Processando dados ---");
-    
-    // Exemplo: Extrair informações dos dados recebidos
-    if (data.indexOf("Temperatura") != -1) {
-        int tempStart = data.indexOf("Temperatura: ") + 13;
-        int tempEnd = data.indexOf("°C", tempStart);
-        if (tempEnd != -1) {
-            String temperatura = data.substring(tempStart, tempEnd);
-            Serial.println("Temperatura extraída: " + temperatura + "°C");
-        }
+void blinkLED(int times, int delayMs) {
+    for (int i = 0; i < times; i++) {
+        digitalWrite(LED_STATUS, HIGH);
+        delay(delayMs);
+        digitalWrite(LED_STATUS, LOW);
+        delay(delayMs);
     }
-    
-    if (data.indexOf("Frequência Cardíaca") != -1) {
-        int fcStart = data.indexOf("Frequência Cardíaca: ") + 21;
-        int fcEnd = data.indexOf(" bpm", fcStart);
-        if (fcEnd != -1) {
-            String frequencia = data.substring(fcStart, fcEnd);
-            Serial.println("Frequência Cardíaca extraída: " + frequencia + " bpm");
-        }
-    }
-    
-    if (data.indexOf("Oxigenação") != -1) {
-        int oxStart = data.indexOf("Oxigenação: ") + 12;
-        int oxEnd = data.indexOf("%", oxStart);
-        if (oxEnd != -1) {
-            String oxigenacao = data.substring(oxStart, oxEnd);
-            Serial.println("Oxigenação extraída: " + oxigenacao + "%");
-        }
-    }
-    
-    Serial.println("--- Fim do processamento ---");
-}
-
-String decryptData(String encryptedData) {
-    // Implementação simples de descriptografia (reverso da criptografia acima)
-    String decryptedData = "";
-    for (int i = 0; i < encryptedData.length(); i++) {
-        decryptedData += char(encryptedData[i] - 1);
-    }
-    return decryptedData;
-}
-
-String receiveData() {
-    String receivedData = "";
-    
-    // Verifica se há dados disponíveis na serial do E32
-    if (E32Serial.available()) {
-        // Lê todos os dados disponíveis
-        while (E32Serial.available()) {
-            char c = E32Serial.read();
-            receivedData += c;
-            delay(10); // Pequeno delay para garantir que todos os dados sejam lidos
-        }
-    }
-
-    receivedData = decryptData(receivedData);  // Descriptografa os dados recebidos (opcional)
-    
-    return receivedData;
 }

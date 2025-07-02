@@ -1,0 +1,38 @@
+# 🔧 Configuração do Gateway VitalSync
+
+Para configurar o Gateway, edite o arquivo `platformio.ini` na seção `build_flags`:
+
+```ini
+build_flags = 
+    -DWIFI_SSID='"SEU_WIFI_AQUI"'
+    -DWIFI_PASSWORD='"SUA_SENHA_AQUI"'
+    -DAPI_ENDPOINT='"https://sua-api.com/endpoint"'
+    -DWIFI_TIMEOUT_MS=10000
+    -DHTTP_TIMEOUT_MS=5000
+```
+
+## 📝 Exemplo de Configuração:
+
+```ini
+build_flags = 
+    -DWIFI_SSID='"MinhaRedeWiFi"'
+    -DWIFI_PASSWORD='"minhaSenha123"'
+    -DAPI_ENDPOINT='"https://api.vitalsync.com/data"'
+    -DWIFI_TIMEOUT_MS=15000
+    -DHTTP_TIMEOUT_MS=8000
+```
+
+## ⚠️ Importante:
+- Use ASPAS DUPLAS dentro de aspas simples para strings: `'"texto"'`
+- Não commit o platformio.ini com suas credenciais reais
+- Timeouts em millisegundos
+
+## 🚀 Para compilar:
+```bash
+pio run
+```
+
+## 📤 Para enviar:
+```bash
+pio run --target upload
+```
