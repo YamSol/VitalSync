@@ -44,7 +44,7 @@ users_db = [
 
 patients_db = [
     {"id": "123", "name": "Igor", "date_of_birth": "2003-05-30"},
-    {"id": "456", "name": "Bob", "date_of_birth": "1985-07-15"},
+    {"id": "456", "name": "Yam", "date_of_birth": "1985-07-15"},
 ]
 
 latest_device_data = {}  # Armazena os dados mais recentes por device_id
