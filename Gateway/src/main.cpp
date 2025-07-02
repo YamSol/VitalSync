@@ -13,6 +13,8 @@ NetworkManager networkManager;
 unsigned long lastWiFiAttempt = 0;
 bool systemReady = false;
 
+void blinkLED(int times, int delayMs);
+
 void setup() {
     Serial.begin(115200);
     Serial.println("\n" + String("=").substring(0,50));
