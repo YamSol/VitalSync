@@ -18,6 +18,9 @@
 #ifndef API_ENDPOINT
 #define API_ENDPOINT "https://api.vitalsync.com/data"
 #endif
+#ifndef API_KEY
+#define API_KEY "CONFIGURE_IN_PLATFORMIO_INI"
+#endif
 #ifndef WIFI_TIMEOUT_MS
 #define WIFI_TIMEOUT_MS 10000
 #endif

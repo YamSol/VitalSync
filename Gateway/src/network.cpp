@@ -40,7 +40,7 @@ bool NetworkManager::sendDataToAPI(const ReceivedData &data) {
     
     Serial.println("\n[NETWORK] Enviando dados para API...");
     
-    // Cria JSON para API (formato completo)
+    // Cria JSON para API
     String jsonPayload = createAPIJSON(data);
     
     Serial.println("JSON para API: " + jsonPayload);
@@ -49,6 +49,7 @@ bool NetworkManager::sendDataToAPI(const ReceivedData &data) {
     HTTPClient http;
     http.begin(API_ENDPOINT);
     http.addHeader("Content-Type", "application/json");
+    http.addHeader("X-API-Key", API_KEY);
     http.setTimeout(HTTP_TIMEOUT_MS);
     
     // Envia POST request
@@ -89,27 +90,15 @@ void NetworkManager::disconnectWiFi() {
 String NetworkManager::createAPIJSON(const ReceivedData &data) {
     Serial.println("Criando JSON para API...");
     
-    // Cria documento JSON no formato completo para API
     JsonDocument doc;
     
-    // Adiciona timestamp atual
-    unsigned long currentTime = millis() / 1000; // Timestamp Unix básico
-    String timestamp = "2025-01-02T" + String(currentTime % 86400 / 3600) + ":00:00"; // Formato simplificado
-    
-    // Preenche dados no formato completo da API
     doc["device_id"] = data.device_id;
     doc["heart_rate"] = data.heart_rate;
     doc["oxygen_level"] = data.oxygen_level;
-    
-    // Objeto aninhado para pressão (formato original da API)
-    JsonObject pressure = doc["pressure"].to<JsonObject>();
-    pressure["systolic"] = data.systolic_pressure;
-    pressure["diastolic"] = data.diastolic_pressure;
-    
+    doc["systolic"] = data.systolic_pressure;
+    doc["diastolic"] = data.diastolic_pressure;
     doc["temperature"] = data.temperature;
-    doc["timestamp"] = timestamp;
     
-    // Serializa para string
     String jsonString;
     serializeJson(doc, jsonString);
     
