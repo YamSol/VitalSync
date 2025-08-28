@@ -99,3 +99,9 @@ bool SensorManager::validateSensorData(const SensorData &data) {
     // não valida a frequência cardíaca
     return true;
 }
+
+String SensorManager::getCurrentTimestamp() {
+    // Por enquanto retorna um timestamp fixo baseado no tempo desde a inicialização
+    // Em um projeto real, poderíamos usar RTC ou NTP para obter a data/hora real
+    return "T" + String(millis() / 1000);
+}

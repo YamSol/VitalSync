@@ -77,10 +77,8 @@ String LoRaManager::createJSON(const SensorData &data) {
     doc["id"] = "T001";  // Device ID abreviado
     doc["hr"] = data.heart_rate;        // heart_rate -> hr
     doc["ox"] = data.oxygen_level;      // oxygen_level -> ox  
-    doc["ps"] = data.pressure.systolic; // pressure.systolic -> ps
-    doc["pd"] = data.pressure.diastolic;// pressure.diastolic -> pd
     doc["temp"] = data.temperature;     // temperature -> temp
-    // Removemos timestamp para economizar espaço (pode ser adicionado pelo Gateway)
+    // Nota: Na nova estrutura do SensorData não temos mais pressure e timestamp
     
     // Serializa para string
     String jsonString;
