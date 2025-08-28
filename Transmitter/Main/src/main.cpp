@@ -65,10 +65,7 @@ Serial.println("\n" + String('=', 50));
     Serial.println("\n[ETAPA 2] Lendo sinais vitais...");
     SensorData data = sensorManager.readSensors();
     
-    // 3. Gerar JSON com os dados (feito internamente no LoRa manager)
-    Serial.println("\n[ETAPA 3] Preparando dados para transmissão...");
-    
-    // 4. Ligar módulo LoRa
+    // 3. Ligar módulo LoRa
     Serial.println("\n[ETAPA 4] Ligando módulo LoRa...");
     if (!loraManager.initLoRa()) {
         Serial.println("ERRO: Falha na inicialização do módulo LoRa!");
@@ -77,7 +74,7 @@ Serial.println("\n" + String('=', 50));
         return;
     }
     
-    // 5. Enviar dados ao Gateway
+    // 4. Serializa o Struct e Enviar dados ao Gateway
     Serial.println("\n[ETAPA 5] Enviando dados ao Gateway...");
     bool sendSuccess = loraManager.sendSensorData(data);
     
