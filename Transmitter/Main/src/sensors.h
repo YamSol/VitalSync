@@ -38,7 +38,6 @@ private:
     uint32_t tsLastReport;          // Timestamp do último relatório
     
     float readTemperature();        // Lê o sensor de temperatura LM35
-    String getCurrentTimestamp();   // Obtém o timestamp atual
     bool validateSensorData(const SensorData &data);  // Valida os dados dos sensores
 };
 
