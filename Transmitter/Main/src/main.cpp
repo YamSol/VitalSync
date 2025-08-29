@@ -79,9 +79,9 @@ Serial.println("\n" + String('=', 50));
     bool sendSuccess = loraManager.sendSensorData(data);
     
     if (sendSuccess) {
-        Serial.println("\n✅ Dados enviados com sucesso!");
+        Serial.println("\nSucesso | Dados enviados com sucesso!");
     } else {
-        Serial.println("\n❌ Falha no envio dos dados!");
+        Serial.println("\nFalha | Falha no envio dos dados!");
     }
     
     // 6. Desligar LoRa e entrar em deepSleep
@@ -103,7 +103,7 @@ Serial.println(String('-', 50));
     
     Serial.println("Entrando em Deep Sleep agora...");
     Serial.flush(); // Garante que todas as mensagens sejam enviadas
-    
+    delay(100);    // Pequeno delay para garantir o flush
     // Entra em deep sleep
     esp_deep_sleep_start();
 }

@@ -7,9 +7,9 @@
 #include <ArduinoJson.h>
 #include "sensors.h"
 
-// Definições de pinos para E32
-#define RXD2 16
-#define TXD2 17
+// Definições de pinos para conexao com E32
+#define RX 3 // GPIO3 (RXD) 
+#define TX 1 // GPIO1 (TXD)
 
 class LoRaManager {
 private:
