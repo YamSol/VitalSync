@@ -1,1 +1,0 @@
-# VitalSync API Module
