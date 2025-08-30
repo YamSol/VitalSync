@@ -25,7 +25,8 @@ bool SensorManager::initSensors() {
     esp_adc_cal_characterize(ADC_UNIT_1, ADC_ATTEN_DB_11, ADC_WIDTH_BIT_12, 3300, &adc_chars);
     
     // Inicializa o oxímetro MAX30100
-    if (!pox.begin(PULSEOXIMETER_DEBUGGINGMODE_PULSEDETECT)) {
+    // if (!pox.begin(PULSEOXIMETER_DEBUGGINGMODE_PULSEDETECT)) {
+    if (!pox.begin()) {
         Serial.println("ERRO: Falha ao inicializar o oxímetro MAX30100");
         return false;
     }
