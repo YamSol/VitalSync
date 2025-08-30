@@ -27,6 +27,13 @@ void setup() {
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
     blinkLED();
     delay(1000);
+
+    if(!sensorManager.initSensors()) {
+        for (;;){
+            blinkLED();
+        };
+        return;
+    }
 }
 
 void loop() {
@@ -34,15 +41,17 @@ void loop() {
     delay(1000);
     
     if (!loraManager.initLoRa()) {
-
+        for (;;){
+            blinkLED();
+        };
         return;
     }
     
-    SensorData data = {
-        .temperature = 36.5,
-        .heart_rate = 72,
-        .oxygen_level = 98
-    };
+    // SensorData data = {
+    //     .temperature = 36.5,
+    //     .heart_rate = 72,
+    //     .oxygen_level = 98
+    // };
     bool sendSuccess = loraManager.sendSensorData(data);
     if (!sendSuccess) {
         for (;;){
