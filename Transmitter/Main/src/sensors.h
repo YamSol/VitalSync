@@ -17,7 +17,7 @@
 #define REPORTING_PERIOD_MS 2000 // Período para relatar os dados
 
 // Estrutura para armazenar dados dos sensores
-struct SensorData {;
+struct SensorData {
     float temperature;
     int heart_rate;
     int oxygen_level;
