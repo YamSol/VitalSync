@@ -61,12 +61,9 @@ SensorData SensorManager::readSensors() {
     
     SensorData data;
     
-    // Atualiza o oxímetro por algum tempo para obter leituras precisas
-    uint32_t startTime = millis();
-    while (millis() - startTime < REPORTING_PERIOD_MS) {
-        pox.update();
-        delay(10);
-    }
+    // Atualiza o oxímetro para obter novos dados
+    pox.update();
+    delay(10);
     
     // Lê dados dos sensores reais
     data.heart_rate = (int)pox.getHeartRate();
@@ -75,30 +72,18 @@ SensorData SensorManager::readSensors() {
     
     // Pressão arterial ainda é simulada (precisaria de outro sensor)
 
-    
-    // Valida os dados antes de retornar
-    if (validateSensorData(data)) {
-        Serial.println("Dados dos sensores válidos!");
+    if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
         Serial.println("Heart Rate: " + String(data.heart_rate) + " BPM");
         Serial.println("Oxygen Level: " + String(data.oxygen_level) + "%");
         Serial.println("Temperature: " + String(data.temperature) + "°C");
+        
+        // Atualiza o timestamp do último relatório
+        tsLastReport = millis();
         
         // Reset do oxímetro para próxima leitura
         pox.shutdown();
         delay(10);
         pox.resume();
-    } else {
-        Serial.println("ERRO: Dados dos sensores inválidos!");
     }
-    
     return data;
 }
-
-bool SensorManager::validateSensorData(const SensorData &data) {
-    if (data.oxygen_level < 90 || data.oxygen_level > 100) return false;
-    if (data.temperature < 33.0 || data.temperature > 40.0) return false;
-    // não valida a frequência cardíaca
-    return true;
-}
-
-// Método removido pois não é mais usado na nova estrutura SensorData
