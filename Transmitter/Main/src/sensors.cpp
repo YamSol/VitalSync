@@ -14,8 +14,6 @@ SensorManager::SensorManager() : tsLastReport(0) {
 }
 
 bool SensorManager::initSensors() {
-    Serial.println("Inicializando sensores...");
-    
     // Inicializa comunicação I2C para o MAX30100
     Wire.begin();
     Wire.setClock(100000);
@@ -35,7 +33,6 @@ bool SensorManager::initSensors() {
     pox.setIRLedCurrent(MAX30100_LED_CURR_4_4MA);
     pox.setOnBeatDetectedCallback(onBeatDetected);
     
-    Serial.println("Sensores inicializados com sucesso!");
     return true;
 }
 
@@ -57,8 +54,6 @@ float SensorManager::readTemperature() {
 }
 
 SensorData SensorManager::readSensors() {
-    Serial.println("Lendo valores dos sensores...");
-    
     SensorData data;
     
     // Atualiza o oxímetro para obter novos dados
