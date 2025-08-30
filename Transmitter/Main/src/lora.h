@@ -8,8 +8,8 @@
 #include "sensors.h"
 
 // Definições de pinos para conexao com E32
-#define RX 3 // GPIO3 (RXD) 
-#define TX 1 // GPIO1 (TXD)
+#define RX_LoRa 3 // GPIO3 (RXD) 
+#define TX_LoRa 1 // GPIO1 (TXD)
 
 class LoRaManager {
 private:

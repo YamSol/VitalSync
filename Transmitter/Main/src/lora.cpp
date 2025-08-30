@@ -8,7 +8,7 @@ bool LoRaManager::initLoRa() {
     Serial.println("Inicializando módulo LoRa E32...");
     
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
-    serialLoRa.begin(9600, SERIAL_8N1, RX, TX);
+    serialLoRa.begin(9600, SERIAL_8N1, RX_LoRa, TX_LoRa);
     
     // Inicializa o módulo E32
     e32ttl.begin();
