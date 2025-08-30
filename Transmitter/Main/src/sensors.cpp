@@ -65,12 +65,12 @@ SensorData SensorManager::readSensors() {
     pox.update();
     delay(10);
     
-    // Lê dados dos sensores reais
+    // Ler temperatura
+    data.temperature = readTemperature();
+
+    // Ler frequência cardíaca e nível de oxigênio
     data.heart_rate = (int)pox.getHeartRate();
     data.oxygen_level = (int)pox.getSpO2();
-    data.temperature = readTemperature();
-    
-    // Pressão arterial ainda é simulada (precisaria de outro sensor)
 
     if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
         Serial.println("Heart Rate: " + String(data.heart_rate) + " BPM");
