@@ -6,18 +6,17 @@
 #include <ArduinoJson.h>
 
 // Definições de pinos para E32
-#define RXD2 16
-#define TXD2 17
+#define Lora_rx_pin 16
+#define Lora_tx_pin 17
+#define Lora_m0_pin 5
+#define Lora_m1_pin 4
+#define Lora_aux_pin 2
 
 // Estrutura para dados recebidos
 struct ReceivedData {
-    String device_id;
+    float temperature;
     int heart_rate;
     int oxygen_level;
-    int systolic_pressure;
-    int diastolic_pressure;
-    float temperature;
-    bool isValid;
 };
 
 class LoRaReceiver {
@@ -30,8 +29,10 @@ public:
     LoRaReceiver();
     bool initLoRa();
     ReceivedData listenForData();
+    void printConfiguration(); // Novo método para debug
     
-private:
+    private:
+    void configureLoRaModule();
     ReceivedData parseJSON(const String &jsonData);
     bool validateData(const ReceivedData &data);
 };
