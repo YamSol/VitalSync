@@ -1,29 +1,29 @@
 #include "lora.h"
 
-LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, Lora_m0_pin, Lora_m1_pin, Lora_aux_pin), isInitialized(false) {
+LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
     // Construtor
 }
 
-bool LoRaReceiver::initLoRa() {
-    Serial.println("Inicializando módulo LoRa E32 (Gateway)...");
-    
+bool LoRaReceiver::initLoRa() { 
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
-    serialLoRa.begin(9600, SERIAL_8N1, Lora_rx_pin, Lora_tx_pin);
+    serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
     
     // Inicializa o módulo E32
     e32ttl.begin();
-    
+
+    // Modo normal
+    digitalWrite(LORA_M0_PIN, LOW);
+    digitalWrite(LORA_M1_PIN, LOW); 
+        
     delay(1000); // Aguarda estabilização
 
-    configureLoRaModule();
+    // configureLoRaModule();
 
-    isInitialized = true;
-    Serial.println("Módulo LoRa E32 inicializado com sucesso!");
-    
     // Imprime configuração atual
     printConfiguration();
     
-    Serial.println("Gateway pronto para receber dados...");
+    isInitialized = true;
+    Serial.println("Módulo LoRa E32 inicializado com sucesso!");
     
     return true;
 }
@@ -101,7 +101,8 @@ ReceivedData LoRaReceiver::listenForData() {
             Serial.println(rc.data);
             
             // Faz parse do JSON
-            ReceivedData parsedData = parseJSON(rc.data);
+            ReceivedData parsedData;
+            parseJSON(rc.data, parsedData);
             
             Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
             Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
@@ -117,9 +118,7 @@ ReceivedData LoRaReceiver::listenForData() {
     return emptyData;
 }
 
-ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
-    ReceivedData data = {0, 0, 0.0};
-    
+int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     Serial.println("Fazendo parse do JSON recebido...");
     
     // Cria documento JSON para parse
@@ -128,7 +127,7 @@ ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
     
     if (error) {
         Serial.println("Erro no parse JSON: " + String(error.c_str()));
-        return data;
+        return 1;
     }
     
     // Extrai dados (formato compacto do transmitter)
@@ -137,7 +136,7 @@ ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
     if (doc.containsKey("ox")) data.oxygen_level = doc["ox"];
     if (doc.containsKey("temp")) data.temperature = doc["temp"];
     
-    return data;
+    return 0;
 }
 
 

@@ -8,8 +8,12 @@
 #include "sensors.h"
 
 // Definições de pinos para conexao com E32
-#define RX_LoRa 3 // GPIO3 (RXD) 
-#define TX_LoRa 1 // GPIO1 (TXD)
+#define LORA_RX_PIN 3 // GPIO3 (RXD) 
+#define LORA_TX_PIN 1 // GPIO1 (TXD)
+#define LORA_M0_PIN 19 // GPIO19 (M0)
+#define LORA_M1_PIN 18 // GPIO18 (M1)
+#define LORA_AUX_PIN 5 // GPIO5 (AUX)
+
 
 class LoRaManager {
 private:
@@ -24,6 +28,8 @@ public:
     void shutdownLoRa();
     
 private:
+    void configureLoRaModule();
+    void printConfiguration();
     String createJSON(const SensorData &data);
     bool sendMessage(const String &message);
 };
