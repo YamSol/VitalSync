@@ -3,12 +3,7 @@
 LoRaManager::LoRaManager() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
     // Construtor
 }
-    // Modo normal (igual ao Gateway)
-    digitalWrite(LORA_M0_PIN, LOW);
-    digitalWrite(LORA_M1_PIN, LOW); 
-        
-    delay(1000); // Aguarda estabilização
-    
+
 bool LoRaManager::initLoRa() {
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
     serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
