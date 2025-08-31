@@ -8,11 +8,11 @@
 #include "sensors.h"
 
 // Definições de pinos para conexao com E32
-#define LORA_RX_PIN 3 // GPIO3 (RXD) 
-#define LORA_TX_PIN 1 // GPIO1 (TXD)
-#define LORA_M0_PIN 19 // GPIO19 (M0)
-#define LORA_M1_PIN 18 // GPIO18 (M1)
-#define LORA_AUX_PIN 5 // GPIO5 (AUX)
+#define LORA_RX_PIN 16 // GPIO3 (RX2D) 
+#define LORA_TX_PIN 17 // GPIO1 (TX2D)
+#define LORA_M0_PIN 5 // GPO5 (M0)
+#define LORA_M1_PIN 4 // GPO4 (M1)
+#define LORA_AUX_PIN 2 // GPO2 (AUX)
 
 
 class LoRaManager {

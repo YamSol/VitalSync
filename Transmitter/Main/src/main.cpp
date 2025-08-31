@@ -26,7 +26,6 @@ void blinkLED();
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
-    blinkLED();
     delay(1000);
 
     // if(!sensorManager.initSensors()) {
@@ -35,19 +34,20 @@ void setup() {
     //     };
     //     return;
     // }
+    Serial.begin(115200);
+    Serial.println("Iniciando sistema VitalSync - Transmitter");
 }
 
 void loop() {
     // SensorData data = sensorManager.readSensors();
-    delay(1000);
+    Serial.println("");
     
     if (!loraManager.initLoRa()) {
-        for (;;){
-            blinkLED();
-        };
+        Serial.println("ERRO: Falha ao inicializar LoRa!");
+        for (;;);
         return;
     }
-    
+
     SensorData data = {
         .temperature = 36.5,
         .heart_rate = 72,
@@ -55,9 +55,9 @@ void loop() {
     };
     bool sendSuccess = loraManager.sendSensorData(data);
     if (!sendSuccess) {
-        for (;;){
-            blinkLED();
-        };
+        Serial.println("ERRO: Falha ao enviar dados via LoRa!");
+        for (;;);
+        return;
     }
     
     loraManager.shutdownLoRa();
@@ -67,7 +67,7 @@ void loop() {
 }
 
 void blinkLED() {
-    const int duration = 1500; // Duração do piscar em milissegundos
+    const int duration = 300; // Duração do piscar em milissegundos
     const int pin = 2; // GPIO do LED embutido
     digitalWrite(pin, HIGH);
     delay(duration);
