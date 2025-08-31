@@ -22,22 +22,23 @@
 SensorManager sensorManager;
 LoRaManager loraManager;
 
+void blinkLED();
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
     blinkLED();
     delay(1000);
 
-    if(!sensorManager.initSensors()) {
-        for (;;){
-            blinkLED();
-        };
-        return;
-    }
+    // if(!sensorManager.initSensors()) {
+    //     for (;;){
+    //         blinkLED();
+    //     };
+    //     return;
+    // }
 }
 
 void loop() {
-    SensorData data = sensorManager.readSensors();
+    // SensorData data = sensorManager.readSensors();
     delay(1000);
     
     if (!loraManager.initLoRa()) {
@@ -47,11 +48,11 @@ void loop() {
         return;
     }
     
-    // SensorData data = {
-    //     .temperature = 36.5,
-    //     .heart_rate = 72,
-    //     .oxygen_level = 98
-    // };
+    SensorData data = {
+        .temperature = 36.5,
+        .heart_rate = 72,
+        .oxygen_level = 98
+    };
     bool sendSuccess = loraManager.sendSensorData(data);
     if (!sendSuccess) {
         for (;;){
@@ -66,7 +67,7 @@ void loop() {
 }
 
 void blinkLED() {
-    const int duration = 300; // Duração do piscar em milissegundos
+    const int duration = 1500; // Duração do piscar em milissegundos
     const int pin = 2; // GPIO do LED embutido
     digitalWrite(pin, HIGH);
     delay(duration);

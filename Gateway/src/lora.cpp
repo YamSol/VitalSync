@@ -1,119 +1,34 @@
 #include "lora.h"
 
-LoRaManager::LoRaManager() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
+LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
     // Construtor
 }
-    // Modo normal (igual ao Gateway)
-    digitalWrite(LORA_M0_PIN, LOW);
-    digitalWrite(LORA_M1_PIN, LOW); 
-        
-    delay(1000); // Aguarda estabilização
-    
-bool LoRaManager::initLoRa() {
+
+bool LoRaReceiver::initLoRa() { 
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
     serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
     
     // Inicializa o módulo E32
     e32ttl.begin();
 
-    // Modo normal (igual ao Gateway)
+    // Modo normal
     digitalWrite(LORA_M0_PIN, LOW);
     digitalWrite(LORA_M1_PIN, LOW); 
         
     delay(1000); // Aguarda estabilização
-    
-    // Configurar o módulo
+
     // configureLoRaModule();
-    // printConfiguration();
+
+    // Imprime configuração atual
+    printConfiguration();
     
     isInitialized = true;
+    Serial.println("Módulo LoRa E32 inicializado com sucesso!");
     
     return true;
 }
 
-bool LoRaManager::sendSensorData(const SensorData &data) {
-    if (!isInitialized) {
-        // Serial.println("ERRO: Módulo LoRa não inicializado!");
-        return false;
-    }
-    
-    // Serial.println("Preparando envio de dados via LoRa...");
-    
-    // Cria JSON com os dados dos sensores
-    String jsonData = createJSON(data);
-    
-    if (jsonData.length() == 0) {
-        // Serial.println("ERRO: Falha ao criar JSON!");
-        return false;
-    }
-    // Serial.println("JSON criado: " + jsonData);
-    
-    // Envia a mensagem compacta
-    bool success = sendMessage(jsonData);
-    
-    return success;
-}
-
-void LoRaManager::shutdownLoRa() {
-    // Serial.println("Desligando módulo LoRa...");
-    
-    // Simples desligamento - não precisamos manipular M0/M1
-    delay(100);
-    
-    isInitialized = false;
-    // Serial.println("Módulo LoRa desligado!");
-}
-
-String LoRaManager::createJSON(const SensorData &data) {
-    
-    // Cria documento JSON COMPACTO (máximo 58 bytes)
-    JsonDocument doc;
-    
-    // Usa nomes de campos muito curtos para economizar espaço
-    doc["id"] = "T001";  // Device ID abreviado
-    doc["hr"] = data.heart_rate;        // heart_rate -> hr
-    doc["ox"] = data.oxygen_level;      // oxygen_level -> ox  
-    doc["temp"] = data.temperature;     // temperature -> temp
-    
-    // Serializa para string
-    String jsonString;
-    serializeJson(doc, jsonString);
-    
-    // Serial.println("JSON compacto criado: " + jsonString);
-    // Serial.println("Tamanho: " + String(jsonString.length()) + " bytes");
-    
-    // if (jsonString.length() > 58) {
-    //     Serial.println("AVISO: JSON ainda muito grande! (" + String(jsonString.length()) + " > 58 bytes)");
-    // }
-    
-    // Serial.println("JSON criado com sucesso!");
-    return jsonString;
-}
-
-bool LoRaManager::sendMessage(const String &message) {
-    // Serial.println("Enviando mensagem via UART para E32...");
-    
-    // Envia via biblioteca E32 (igual ao código funcional)
-    ResponseStatus rs = e32ttl.sendMessage(message);
-    
-    // Exibe o status como no código funcional
-    // Serial.print("Status do envio: ");
-    // Serial.println(rs.getResponseDescription());
-    
-    // Para debug, vamos também mostrar o código
-    // Serial.println("Código: " + String(rs.code));
-    
-    // Verificar se é SUCCESS (código 1 significa sucesso)
-    if (rs.code == 1) {
-        // Serial.println("Mensagem enviada com sucesso!");
-        return true;
-    } else {
-        // Serial.println("ERRO no envio da mensagem. Código: " + String(rs.code));
-        return false;
-    }
-}
-
-void LoRaManager::configureLoRaModule()
+void LoRaReceiver::configureLoRaModule()
 {
     // Configura o módulo
     e32ttl.begin();
@@ -163,7 +78,69 @@ void LoRaManager::configureLoRaModule()
     c.close();
 }
 
-void LoRaManager::printConfiguration() {
+ReceivedData LoRaReceiver::listenForData() {
+    ReceivedData emptyData = {0, 0, 0.0};
+    
+    if (!isInitialized) {
+        Serial.println("ERRO: Módulo LoRa não inicializado!");
+        return emptyData;
+    }
+    
+    // Verifica se há dados disponíveis (igual ao código funcional)
+    if (e32ttl.available() > 1) {
+        Serial.println("\n[GATEWAY] Dados recebidos via LoRa!");
+        
+        // Recebe a mensagem
+        ResponseContainer rc = e32ttl.receiveMessage();
+        
+        Serial.print("Status da recepção: ");
+        Serial.println(rc.status.getResponseDescription());
+        
+        if (rc.status.code == 1) { // Sucesso
+            Serial.print("Dados brutos recebidos: ");
+            Serial.println(rc.data);
+            
+            // Faz parse do JSON
+            ReceivedData parsedData;
+            parseJSON(rc.data, parsedData);
+            
+            Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
+            Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
+            Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
+            Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
+                
+            return parsedData;
+        } else {
+            Serial.println("Erro na recepção. Código: " + String(rc.status.code));
+        }
+    }
+    
+    return emptyData;
+}
+
+int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
+    Serial.println("Fazendo parse do JSON recebido...");
+    
+    // Cria documento JSON para parse
+    JsonDocument doc;
+    DeserializationError error = deserializeJson(doc, jsonData);
+    
+    if (error) {
+        Serial.println("Erro no parse JSON: " + String(error.c_str()));
+        return 1;
+    }
+    
+    // Extrai dados (formato compacto do transmitter)
+    // if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
+    if (doc.containsKey("hr")) data.heart_rate = doc["hr"];
+    if (doc.containsKey("ox")) data.oxygen_level = doc["ox"];
+    if (doc.containsKey("temp")) data.temperature = doc["temp"];
+    
+    return 0;
+}
+
+
+void LoRaReceiver::printConfiguration() {
     if (!isInitialized) {
         Serial.println("Módulo LoRa não inicializado!");
         return;
