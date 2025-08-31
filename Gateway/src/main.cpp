@@ -95,7 +95,7 @@ void loop() {
         //     Serial.println("Tentativa de WiFi adiada por 30 segundos...");
         //     lastWiFiAttempt = millis();
         // }
-        
+      
         Serial.println("\n[GATEWAY] Retornando ao modo escuta LoRa...");
         Serial.println("" + String("-").substring(0,50) + "\n");
     }
