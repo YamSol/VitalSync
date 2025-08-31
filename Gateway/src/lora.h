@@ -34,7 +34,6 @@ public:
     private:
     void configureLoRaModule();
     ReceivedData parseJSON(const String &jsonData, ReceivedData &data);
-    bool validateData(const ReceivedData &data);
 };
 
 #endif

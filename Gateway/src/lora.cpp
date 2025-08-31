@@ -140,25 +140,6 @@ ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
     return data;
 }
 
-bool LoRaReceiver::validateData(const ReceivedData &data) {
-    // Validações básicas
-    if (data.heart_rate < 30 || data.heart_rate > 200) {
-        Serial.println("Validação falhou: heart_rate fora do range (30-200)");
-        return false;
-    }
-    
-    if (data.oxygen_level < 70 || data.oxygen_level > 100) {
-        Serial.println("Validação falhou: oxygen_level fora do range (70-100)");
-        return false;
-    }
-    
-    if (data.temperature < 30.0 || data.temperature > 45.0) {
-        Serial.println("Validação falhou: temperature fora do range (30-45°C)");
-        return false;
-    }
-    
-    return true;
-}
 
 void LoRaReceiver::printConfiguration() {
     if (!isInitialized) {
