@@ -14,9 +14,9 @@
 
 // Estrutura para dados recebidos
 struct ReceivedData {
-    float temperature;
     int heart_rate;
     int oxygen_level;
+    float temperature;
 };
 
 class LoRaReceiver {
@@ -33,7 +33,7 @@ public:
     
     private:
     void configureLoRaModule();
-    ReceivedData parseJSON(const String &jsonData);
+    ReceivedData parseJSON(const String &jsonData, ReceivedData &data);
     bool validateData(const ReceivedData &data);
 };
 

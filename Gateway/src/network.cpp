@@ -92,11 +92,8 @@ String NetworkManager::createAPIJSON(const ReceivedData &data) {
     
     JsonDocument doc;
     
-    doc["device_id"] = data.device_id;
     doc["heart_rate"] = data.heart_rate;
     doc["oxygen_level"] = data.oxygen_level;
-    doc["systolic"] = data.systolic_pressure;
-    doc["diastolic"] = data.diastolic_pressure;
     doc["temperature"] = data.temperature;
     
     String jsonString;
