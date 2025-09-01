@@ -38,7 +38,10 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
     // Serial.println("JSON criado: " + jsonData);
     
     // Envia a mensagem compacta
-    bool success = sendMessage(jsonData);
+    // jsonData = jsonData + '\n';
+    // bool success = sendMessage(jsonData);
+    String msg = "THIS IS SPARTA";
+    bool success = sendMessage(msg);
     
     return success;
 }
@@ -99,10 +102,11 @@ void LoRaManager::configureLoRaModule()
     Serial.println("Configuração atual obtida com sucesso!");
 
     // Define configurações específicas
-    configuration.ADDL = TRANSMITTER_ADDL; // Endereço baixo do Transmitter
-    configuration.ADDH = TRANSMITTER_ADDH; // Endereço alto do Transmitter
-    configuration.CHAN = CHANNEL;
-    configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+    configuration.ADDH = 0x00; // Endereço alto do Transmitter
+    configuration.ADDL = 0x01; // Endereço baixo do Transmitter
+    configuration.CHAN = 23;
+    // configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+    configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
     configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
     configuration.OPTION.transmissionPower = POWER_20;
     configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
@@ -111,7 +115,7 @@ void LoRaManager::configureLoRaModule()
     configuration.SPED.uartParity = MODE_00_8N1;
 
     // Aplica as configurações
-    ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+    ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_LOSE);
     Serial.print("Status da aplicação da configuração: ");
     Serial.println(rsConfig.getResponseDescription());
 
