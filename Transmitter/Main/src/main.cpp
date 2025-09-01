@@ -46,48 +46,67 @@ void loop() {
     // 7. Desliga o módulo LoRa
     // 8. Aguarda próximo comando do tablet
 
-    // SensorData data = sensorManager.readSensors();
+    // SensorData data = sensorManager.readOximeter();
 
     if(digitalRead(18) == HIGH)
     {
         sensorManager.initSensors();
 
         // Aguardando estabilização do sensor
+        Serial.println("Aguardando estabilização do sensor...");
+        SensorData dataTemp;
         for(int i = 0; i < 200; i++)
         {
-            sensorManager.readSensors();
+            sensorManager.readOximeter(dataTemp);
             delay(100);
         }
 
         // Fazendo a leitura dos dados
+        Serial.println("Lendo dados do oxímetro...");
         for(int i = 0; i < 100; i++)
         {
-            sensorDataBuffer[i] = sensorManager.readSensors();
+            sensorManager.readOximeter(sensorDataBuffer[i]);
             delay(100);
+        }
+        Serial.println("Leitura do oxímetro concluída... 10 segundos até a leitura de temperatura");
+        delay(10000);
+        for(int i = 0; i < 100; i++)
+        {
+            sensorManager.readTemperature(sensorDataBuffer[i]);
+            delay(100);
+        }
+        Serial.println("Leitura de temperatura concluída.");
+
+        for(int i = 0; i < 100; i++)
+        {
+            Serial.println("Heart Rate: " + String(sensorDataBuffer[i].heart_rate) + " BPM");
+            Serial.println("Oxygen Level: " + String(sensorDataBuffer[i].oxygen_level) + "%");
+            Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
+            Serial.println("-------------------------");
         }
 
     }
     
-    if (!loraManager.initLoRa()) {
-        Serial.println("ERRO: Falha ao inicializar LoRa!");
-        for (;;);
-        return;
-    }
-    Serial.println("Módulo LoRa inicializado com sucesso!");
+    // if (!loraManager.initLoRa()) {
+    //     Serial.println("ERRO: Falha ao inicializar LoRa!");
+    //     for (;;);
+    //     return;
+    // }
+    // Serial.println("Módulo LoRa inicializado com sucesso!");
 
-    SensorData data = {
-        .temperature = 36.5,
-        .heart_rate = 72,
-        .oxygen_level = 98
-    };
-    bool sendSuccess = loraManager.sendSensorData(data);
-    if (!sendSuccess) {
-        Serial.println("ERRO: Falha ao enviar dados via LoRa!");
-        for (;;);
-        return;
-    }
+    // SensorData data = {
+    //     .temperature = 36.5,
+    //     .heart_rate = 72,
+    //     .oxygen_level = 98
+    // };
+    // bool sendSuccess = loraManager.sendSensorData(data);
+    // if (!sendSuccess) {
+    //     Serial.println("ERRO: Falha ao enviar dados via LoRa!");
+    //     for (;;);
+    //     return;
+    // }
     
-    loraManager.shutdownLoRa();
+    // loraManager.shutdownLoRa();
 
-    delay(1000);
+    // delay(1000);
 }
