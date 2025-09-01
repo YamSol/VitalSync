@@ -93,8 +93,6 @@ void loop() {
       
         Serial.println("\n[GATEWAY] Retornando ao modo escuta LoRa...");
         Serial.println("" + String("-").substring(0,50) + "\n");
-    } else {
-        Serial.println("Nenhum dado válido recebido. Continuando escuta...");
     }
     
     // Pequeno delay para não sobrecarregar o sistema

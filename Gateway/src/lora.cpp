@@ -10,14 +10,8 @@ bool LoRaReceiver::initLoRa() {
     
     // Inicializa o módulo E32
     e32ttl.begin();
-
-    // Modo normal
-    digitalWrite(LORA_M0_PIN, LOW);
-    digitalWrite(LORA_M1_PIN, LOW); 
         
-    delay(1000); // Aguarda estabilização
-
-    // configureLoRaModule();
+    configureLoRaModule();
 
     // Imprime configuração atual
     printConfiguration();
