@@ -1,29 +1,82 @@
 #include "lora.h"
 
-LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa), isInitialized(false) {
+LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_AUX_PIN, LORA_M0_PIN, LORA_M1_PIN), isInitialized(false) {
     // Construtor
 }
 
-bool LoRaReceiver::initLoRa() {
-    Serial.println("Inicializando módulo LoRa E32 (Gateway)...");
-    
+bool LoRaReceiver::initLoRa() { 
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
-    serialLoRa.begin(9600, SERIAL_8N1, RXD2, TXD2); // RX=16, TX=17
+    serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
     
     // Inicializa o módulo E32
     e32ttl.begin();
-    
-    delay(1000); // Aguarda estabilização
+        
+    configureLoRaModule();
+
+    // Aguarda estabilização
+    delay(1000);
+
+    // Imprime configuração atual
+    printConfiguration();
     
     isInitialized = true;
     Serial.println("Módulo LoRa E32 inicializado com sucesso!");
-    Serial.println("Gateway pronto para receber dados...");
     
     return true;
 }
 
+void LoRaReceiver::configureLoRaModule()
+{
+    // Configura o módulo
+    e32ttl.begin();
+
+    // Obtém configuração atual
+    ResponseStructContainer c = e32ttl.getConfiguration();
+    Configuration configuration = *(Configuration *)c.data;
+    Serial.print("Status da configuração: ");
+    Serial.println(c.status.getResponseDescription());
+
+    if (c.status.code == 1)
+    {
+        Serial.println("Configuração atual obtida com sucesso!");
+
+        // Define configurações específicas
+        configuration.ADDL = 0x01; // Endereço baixo do Gateway
+        configuration.ADDH = 0x00; // Endereço alto do Gateway
+        configuration.CHAN = 23;      // Canal 23
+        configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
+        configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
+        configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
+        configuration.OPTION.transmissionPower = POWER_20;
+
+        configuration.SPED.airDataRate = AIR_DATA_RATE_010_24;
+        configuration.SPED.uartBaudRate = UART_BPS_9600;
+        configuration.SPED.uartParity = MODE_00_8N1;
+
+        // Aplica as configurações
+        ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_LOSE);
+        Serial.print("Status da aplicação da configuração: ");
+        Serial.println(rsConfig.getResponseDescription());
+
+        if (rsConfig.code == 1)
+        {
+            Serial.println("Configurações aplicadas com sucesso!");
+        }
+        else
+        {
+            Serial.println("Erro ao aplicar configurações!");
+        }
+    }
+    else
+    {
+        Serial.println("Erro ao obter configuração atual!");
+    }
+
+    c.close();
+}
+
 ReceivedData LoRaReceiver::listenForData() {
-    ReceivedData emptyData = {"", 0, 0, 0, 0, 0.0, false};
+    ReceivedData emptyData = {0, 0, 0.0};
     
     if (!isInitialized) {
         Serial.println("ERRO: Módulo LoRa não inicializado!");
@@ -43,33 +96,30 @@ ReceivedData LoRaReceiver::listenForData() {
         if (rc.status.code == 1) { // Sucesso
             Serial.print("Dados brutos recebidos: ");
             Serial.println(rc.data);
+
+            
             
             // Faz parse do JSON
-            ReceivedData parsedData = parseJSON(rc.data);
+            // ReceivedData parsedData;
+            // parseJSON(rc.data, parsedData);
             
-            if (parsedData.isValid) {
-                Serial.println("✅ Dados válidos recebidos!");
-                Serial.println("Device ID: " + parsedData.device_id);
-                Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
-                Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
-                Serial.println("Blood Pressure: " + String(parsedData.systolic_pressure) + "/" + String(parsedData.diastolic_pressure));
-                Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
-                
-                return parsedData;
-            } else {
-                Serial.println("❌ Erro no parse dos dados recebidos!");
-            }
+            // Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
+            // Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
+            // Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
+            // Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
+               
+            // Retorna os dados fake
+            ReceivedData parsedData = {0, 0, 0.0};
+            return parsedData;
         } else {
-            Serial.println("❌ Erro na recepção. Código: " + String(rc.status.code));
+            Serial.println("Erro na recepção. Código: " + String(rc.status.code));
         }
     }
     
     return emptyData;
 }
 
-ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
-    ReceivedData data = {"", 0, 0, 0, 0, 0.0, false};
-    
+int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     Serial.println("Fazendo parse do JSON recebido...");
     
     // Cria documento JSON para parse
@@ -78,65 +128,69 @@ ReceivedData LoRaReceiver::parseJSON(const String &jsonData) {
     
     if (error) {
         Serial.println("Erro no parse JSON: " + String(error.c_str()));
-        return data;
+        return 1;
     }
     
     // Extrai dados (formato compacto do transmitter)
-    if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
+    // if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
     if (doc.containsKey("hr")) data.heart_rate = doc["hr"];
     if (doc.containsKey("ox")) data.oxygen_level = doc["ox"];
-    if (doc.containsKey("ps")) data.systolic_pressure = doc["ps"];
-    if (doc.containsKey("pd")) data.diastolic_pressure = doc["pd"];
     if (doc.containsKey("temp")) data.temperature = doc["temp"];
     
-    // Converte device_id abreviado para completo
-    if (data.device_id == "T001") {
-        data.device_id = "ESP32_TRANSMITTER_001";
-    }
-    
-    // Valida os dados
-    data.isValid = validateData(data);
-    
-    if (data.isValid) {
-        Serial.println("Parse JSON realizado com sucesso!");
-    } else {
-        Serial.println("Dados inválidos após parse JSON!");
-    }
-    
-    return data;
+    return 0;
 }
 
-bool LoRaReceiver::validateData(const ReceivedData &data) {
-    // Validações básicas
-    if (data.device_id.length() == 0) {
-        Serial.println("Validação falhou: device_id vazio");
-        return false;
+
+void LoRaReceiver::printConfiguration() {
+    // if (!isInitialized) {
+    //     Serial.println("Módulo LoRa não inicializado!");
+    //     return;
+    // }
+    
+    ResponseStructContainer c = e32ttl.getConfiguration();
+    if (c.status.code == 1) {
+        Configuration configuration = *(Configuration*) c.data;
+        
+        Serial.println("========== CONFIGURAÇÃO ATUAL ==========");
+        Serial.println("Endereço Alto (ADDH): " + String(configuration.ADDH, HEX));
+        Serial.println("Endereço Baixo (ADDL): " + String(configuration.ADDL, HEX));
+        Serial.println("Canal (CHAN): " + String(configuration.CHAN));
+        
+        Serial.print("Taxa de dados do ar: ");
+        switch(configuration.SPED.airDataRate) {
+            case AIR_DATA_RATE_000_03: Serial.println("0.3 kbps"); break;
+            case AIR_DATA_RATE_001_12: Serial.println("1.2 kbps"); break;
+            case AIR_DATA_RATE_010_24: Serial.println("2.4 kbps"); break;
+            case AIR_DATA_RATE_011_48: Serial.println("4.8 kbps"); break;
+            case AIR_DATA_RATE_100_96: Serial.println("9.6 kbps"); break;
+            case AIR_DATA_RATE_101_192: Serial.println("19.2 kbps"); break;
+            default: Serial.println("Desconhecida");
+        }
+        
+        Serial.print("Baud rate UART: ");
+        switch(configuration.SPED.uartBaudRate) {
+            case UART_BPS_1200: Serial.println("1200"); break;
+            case UART_BPS_2400: Serial.println("2400"); break;
+            case UART_BPS_4800: Serial.println("4800"); break;
+            case UART_BPS_9600: Serial.println("9600"); break;
+            case UART_BPS_19200: Serial.println("19200"); break;
+            case UART_BPS_38400: Serial.println("38400"); break;
+            case UART_BPS_57600: Serial.println("57600"); break;
+            case UART_BPS_115200: Serial.println("115200"); break;
+        }
+        
+        Serial.print("Potência de transmissão: ");
+        switch(configuration.OPTION.transmissionPower) {
+            case POWER_20: Serial.println("20 dBm"); break;
+            case POWER_17: Serial.println("17 dBm"); break;
+            case POWER_14: Serial.println("14 dBm"); break;
+            case POWER_10: Serial.println("10 dBm"); break;
+        }
+        
+        Serial.println("========================================");
+    } else {
+        Serial.println("Erro ao obter configuração: " + c.status.getResponseDescription());
     }
     
-    if (data.heart_rate < 30 || data.heart_rate > 200) {
-        Serial.println("Validação falhou: heart_rate fora do range (30-200)");
-        return false;
-    }
-    
-    if (data.oxygen_level < 70 || data.oxygen_level > 100) {
-        Serial.println("Validação falhou: oxygen_level fora do range (70-100)");
-        return false;
-    }
-    
-    if (data.systolic_pressure < 70 || data.systolic_pressure > 250) {
-        Serial.println("Validação falhou: systolic_pressure fora do range (70-250)");
-        return false;
-    }
-    
-    if (data.diastolic_pressure < 40 || data.diastolic_pressure > 150) {
-        Serial.println("Validação falhou: diastolic_pressure fora do range (40-150)");
-        return false;
-    }
-    
-    if (data.temperature < 30.0 || data.temperature > 45.0) {
-        Serial.println("Validação falhou: temperature fora do range (30-45°C)");
-        return false;
-    }
-    
-    return true;
+    c.close();
 }
