@@ -81,3 +81,12 @@ SensorData SensorManager::readSensors() {
     }
     return data;
 }
+
+String SensorManager::structToString(const SensorData &data) {
+    String result = "\x01"; // Indica início dos dados
+    result = "Temperature: " + String(data.temperature) + " C, ";
+    result += "Heart Rate: " + String(data.heart_rate) + " BPM, ";
+    result += "Oxygen Level: " + String(data.oxygen_level) + "%";
+    result += "\x02"; // Indica fim dos dados
+    return result;
+}

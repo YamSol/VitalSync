@@ -57,6 +57,7 @@ void loop() {
         .heart_rate = 72,
         .oxygen_level = 98
     };
+    
     bool sendSuccess = loraManager.sendSensorData(data);
     if (!sendSuccess) {
         Serial.println("ERRO: Falha ao enviar dados via LoRa!");

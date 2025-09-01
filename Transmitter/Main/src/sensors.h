@@ -28,6 +28,7 @@ public:
     SensorManager();
     bool initSensors();
     SensorData readSensors();
+    String structToString(const SensorData &data);
     
     // Callback para detecção de batimento cardíaco
     static void onBeatDetected();
