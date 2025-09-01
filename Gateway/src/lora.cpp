@@ -13,6 +13,9 @@ bool LoRaReceiver::initLoRa() {
         
     configureLoRaModule();
 
+    // Aguarda estabilização
+    delay(1000);
+
     // Imprime configuração atual
     printConfiguration();
     
