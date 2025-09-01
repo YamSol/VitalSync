@@ -13,7 +13,7 @@ bool LoRaManager::initLoRa() {
     Serial.println("END - Configurando modulo");
     
     
-    // printConfiguration();
+    printConfiguration();
     
     isInitialized = true;
     return true;
@@ -91,7 +91,7 @@ void LoRaManager::configureLoRaModule()
     Serial.print("Status da configuração: ");
     Serial.println(c.status.getResponseDescription());
 
-    if (c.status.code == 1) {
+    if (c.status.code != 1) {
         Serial.println("Erro ao obter configuração atual!");
         c.close();
         return;
@@ -126,10 +126,10 @@ void LoRaManager::configureLoRaModule()
 }
 
 void LoRaManager::printConfiguration() {
-    if (!isInitialized) {
-        Serial.println("Módulo LoRa não inicializado!");
-        return;
-    }
+    // if (!isInitialized) {
+    //     Serial.println("Módulo LoRa não inicializado!");
+    //     return;
+    // }
     
     ResponseStructContainer c = e32ttl.getConfiguration();
     if (c.status.code == 1) {

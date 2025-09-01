@@ -11,7 +11,7 @@ bool LoRaReceiver::initLoRa() {
     // Inicializa o módulo E32
     e32ttl.begin();
         
-    configureLoRaModule();
+    // configureLoRaModule();
 
     // Aguarda estabilização
     delay(1000);
@@ -138,10 +138,10 @@ int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
 
 
 void LoRaReceiver::printConfiguration() {
-    if (!isInitialized) {
-        Serial.println("Módulo LoRa não inicializado!");
-        return;
-    }
+    // if (!isInitialized) {
+    //     Serial.println("Módulo LoRa não inicializado!");
+    //     return;
+    // }
     
     ResponseStructContainer c = e32ttl.getConfiguration();
     if (c.status.code == 1) {
