@@ -58,7 +58,6 @@ SensorData SensorManager::readSensors() {
     
     // Atualiza o oxímetro para obter novos dados
     pox.update();
-    delay(10);
     
     // Ler temperatura
     data.temperature = readTemperature();
