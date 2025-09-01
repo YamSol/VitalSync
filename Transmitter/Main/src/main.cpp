@@ -33,6 +33,16 @@ void setup() {
 }
 
 void loop() {
+    // # Fluxo da aplicaçao, baseada em comandos recebidos do tablet
+    // 1. Recebeu comando "ler e enviar dados" do tablet
+    // 2. Liga sensores
+    // 3. Lê os sensores N vezes e armazenar num buffer
+    // 4. Desliga sensores
+    // 5. Liga o módulo LoRa
+    // 6. Envia os dados via LoRa
+    // 7. Desliga o módulo LoRa
+    // 8. Aguarda próximo comando do tablet
+
     // SensorData data = sensorManager.readSensors();
     
     if (!loraManager.initLoRa()) {
