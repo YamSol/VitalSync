@@ -32,12 +32,7 @@ void setup() {
         Serial.println("✅ LoRa inicializado com sucesso!");
         systemReady = true;
         
-        // LED indica sistema pronto
-        digitalWrite(LED_STATUS, HIGH);
-        delay(500);
-        digitalWrite(LED_STATUS, LOW);
-        delay(500);
-        digitalWrite(LED_STATUS, HIGH);
+        blinkLED(2, 500);
     } else {
         Serial.println("❌ Falha na inicialização do LoRa!");
         systemReady = false;
@@ -63,7 +58,7 @@ void loop() {
         Serial.println("\n[ETAPA 2] Dados válidos recebidos!");
         
         // Pisca LED para indicar recepção
-        blinkLED(3, 200);
+        blinkLED(3, 300);
         Serial.println("Dados recebidos:");
         Serial.println(" - Heart Rate: " + String(receivedData.heart_rate) +
                             " BPM\n - Oxygen Level: " + String(receivedData.oxygen_level) + 
@@ -98,6 +93,8 @@ void loop() {
       
         Serial.println("\n[GATEWAY] Retornando ao modo escuta LoRa...");
         Serial.println("" + String("-").substring(0,50) + "\n");
+    } else {
+        Serial.println("Nenhum dado válido recebido. Continuando escuta...");
     }
     
     // Pequeno delay para não sobrecarregar o sistema

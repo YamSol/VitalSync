@@ -44,9 +44,9 @@ void LoRaReceiver::configureLoRaModule()
         Serial.println("Configuração atual obtida com sucesso!");
 
         // Define configurações específicas
-        configuration.ADDL = 0x01; // Endereço baixo
-        configuration.ADDH = 0x00; // Endereço alto
-        configuration.CHAN = 23;   // Canal 23
+        configuration.ADDL = GATEWAY_ADDL; // Endereço baixo do Gateway
+        configuration.ADDH = GATEWAY_ADDH; // Endereço alto do Gateway
+        configuration.CHAN = CHANNEL;      // Canal 23
         configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
         configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
         configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;

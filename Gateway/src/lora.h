@@ -12,6 +12,11 @@
 #define LORA_M1_PIN 4
 #define LORA_AUX_PIN 2
 
+// Definições de comunicação LoRa
+#define GATEWAY_ADDH 0xFF    // Endereço alto do Gateway
+#define GATEWAY_ADDL 0xFF    // Endereço baixo do Gateway (0xFFFF)
+#define CHANNEL 0x17         // Canal 23 (0x17 em hex)
+
 // Estrutura para dados recebidos
 struct ReceivedData {
     int heart_rate;

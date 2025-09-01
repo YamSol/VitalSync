@@ -1,34 +1,28 @@
 #include "lora.h"
 
-LoRaManager::LoRaManager() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
+LoRaManager::LoRaManager() : loraHardwareSerial(2), e32ttl(&loraHardwareSerial, LORA_AUX_PIN, LORA_M0_PIN, LORA_M1_PIN), isInitialized(false) {
     // Construtor
 }
 
 bool LoRaManager::initLoRa() {
-    // Inicializa Serial para comunicação com E32 (igual ao código funcional)
-    serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
-    
-    // Inicializa o módulo E32
+    loraHardwareSerial.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
     e32ttl.begin();
-
-    // Modo normal (igual ao Gateway)
-    digitalWrite(LORA_M0_PIN, LOW);
-    digitalWrite(LORA_M1_PIN, LOW); 
-        
-    delay(1000); // Aguarda estabilização
     
-    // Configurar o módulo
-    // configureLoRaModule();
+    Serial.println("START - Configurando modulo");
+    configureLoRaModule();
+    Serial.println("END - Configurando modulo");
+    
+    
     // printConfiguration();
     
     isInitialized = true;
-    
     return true;
 }
 
 bool LoRaManager::sendSensorData(const SensorData &data) {
     if (!isInitialized) {
-        // Serial.println("ERRO: Módulo LoRa não inicializado!");
+        Serial.println("Nao foi possível enviar dados");
+        Serial.println("ERRO: Módulo LoRa não inicializado!");
         return false;
     }
     
@@ -50,13 +44,8 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
 }
 
 void LoRaManager::shutdownLoRa() {
-    // Serial.println("Desligando módulo LoRa...");
-    
-    // Simples desligamento - não precisamos manipular M0/M1
-    delay(100);
-    
     isInitialized = false;
-    // Serial.println("Módulo LoRa desligado!");
+    Serial.println("Módulo LoRa desligado!");
 }
 
 String LoRaManager::createJSON(const SensorData &data) {
@@ -64,8 +53,6 @@ String LoRaManager::createJSON(const SensorData &data) {
     // Cria documento JSON COMPACTO (máximo 58 bytes)
     JsonDocument doc;
     
-    // Usa nomes de campos muito curtos para economizar espaço
-    doc["id"] = "T001";  // Device ID abreviado
     doc["hr"] = data.heart_rate;        // heart_rate -> hr
     doc["ox"] = data.oxygen_level;      // oxygen_level -> ox  
     doc["temp"] = data.temperature;     // temperature -> temp
@@ -73,15 +60,8 @@ String LoRaManager::createJSON(const SensorData &data) {
     // Serializa para string
     String jsonString;
     serializeJson(doc, jsonString);
-    
-    // Serial.println("JSON compacto criado: " + jsonString);
-    // Serial.println("Tamanho: " + String(jsonString.length()) + " bytes");
-    
-    // if (jsonString.length() > 58) {
-    //     Serial.println("AVISO: JSON ainda muito grande! (" + String(jsonString.length()) + " > 58 bytes)");
-    // }
-    
-    // Serial.println("JSON criado com sucesso!");
+
+    Serial.println("JSON compacto criado: " + jsonString + " (" + String(jsonString.length()) + " bytes)");
     return jsonString;
 }
 
@@ -89,15 +69,9 @@ bool LoRaManager::sendMessage(const String &message) {
     // Serial.println("Enviando mensagem via UART para E32...");
     
     // Envia via biblioteca E32 (igual ao código funcional)
-    ResponseStatus rs = e32ttl.sendMessage(message);
-    
-    // Exibe o status como no código funcional
-    // Serial.print("Status do envio: ");
-    // Serial.println(rs.getResponseDescription());
-    
-    // Para debug, vamos também mostrar o código
-    // Serial.println("Código: " + String(rs.code));
-    
+    // ResponseStatus rs = e32ttl.sendMessage(message);
+    ResponseStatus rs = e32ttl.sendFixedMessage(GATEWAY_ADDH, GATEWAY_ADDL, CHANNEL, message);
+
     // Verificar se é SUCCESS (código 1 significa sucesso)
     if (rs.code == 1) {
         // Serial.println("Mensagem enviada com sucesso!");
@@ -110,8 +84,6 @@ bool LoRaManager::sendMessage(const String &message) {
 
 void LoRaManager::configureLoRaModule()
 {
-    // Configura o módulo
-    e32ttl.begin();
 
     // Obtém configuração atual
     ResponseStructContainer c = e32ttl.getConfiguration();
@@ -119,40 +91,35 @@ void LoRaManager::configureLoRaModule()
     Serial.print("Status da configuração: ");
     Serial.println(c.status.getResponseDescription());
 
-    if (c.status.code == 1)
-    {
-        Serial.println("Configuração atual obtida com sucesso!");
-
-        // Define configurações específicas
-        configuration.ADDL = 0x01; // Endereço baixo
-        configuration.ADDH = 0x00; // Endereço alto
-        configuration.CHAN = 23;   // Canal 23
-        configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
-        configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
-        configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
-        configuration.OPTION.transmissionPower = POWER_20;
-
-        configuration.SPED.airDataRate = AIR_DATA_RATE_010_24;
-        configuration.SPED.uartBaudRate = UART_BPS_9600;
-        configuration.SPED.uartParity = MODE_00_8N1;
-
-        // Aplica as configurações
-        ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
-        Serial.print("Status da aplicação da configuração: ");
-        Serial.println(rsConfig.getResponseDescription());
-
-        if (rsConfig.code == 1)
-        {
-            Serial.println("Configurações aplicadas com sucesso!");
-        }
-        else
-        {
-            Serial.println("Erro ao aplicar configurações!");
-        }
-    }
-    else
-    {
+    if (c.status.code == 1) {
         Serial.println("Erro ao obter configuração atual!");
+        c.close();
+        return;
+    }
+    Serial.println("Configuração atual obtida com sucesso!");
+
+    // Define configurações específicas
+    configuration.ADDL = TRANSMITTER_ADDL; // Endereço baixo do Transmitter
+    configuration.ADDH = TRANSMITTER_ADDH; // Endereço alto do Transmitter
+    configuration.CHAN = CHANNEL;
+    configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
+    configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
+    configuration.OPTION.transmissionPower = POWER_20;
+    configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
+    configuration.SPED.airDataRate = AIR_DATA_RATE_010_24;
+    configuration.SPED.uartBaudRate = UART_BPS_9600;
+    configuration.SPED.uartParity = MODE_00_8N1;
+
+    // Aplica as configurações
+    ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+    Serial.print("Status da aplicação da configuração: ");
+    Serial.println(rsConfig.getResponseDescription());
+
+    if (rsConfig.code == 1) {
+        Serial.println("Configurações aplicadas com sucesso!");
+    }
+    else {
+        Serial.println("Erro ao aplicar configurações!");
     }
 
     c.close();

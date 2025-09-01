@@ -14,15 +14,9 @@
 #include "sensors.h"
 #include "lora.h"
 
-// Configurações de temporização
-#define SLEEP_TIME_SECONDS 30  // Tempo em deep sleep (30 segundos para teste)
-#define uS_TO_S_FACTOR 1000000ULL  // Fator de conversão de microssegundos para segundos
-
 // Instâncias dos gerenciadores
 SensorManager sensorManager;
 LoRaManager loraManager;
-
-void blinkLED();
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
@@ -40,13 +34,13 @@ void setup() {
 
 void loop() {
     // SensorData data = sensorManager.readSensors();
-    Serial.println("");
     
     if (!loraManager.initLoRa()) {
         Serial.println("ERRO: Falha ao inicializar LoRa!");
         for (;;);
         return;
     }
+    Serial.println("Módulo LoRa inicializado com sucesso!");
 
     SensorData data = {
         .temperature = 36.5,
@@ -62,15 +56,5 @@ void loop() {
     
     loraManager.shutdownLoRa();
 
-    blinkLED();
     delay(1000);
-}
-
-void blinkLED() {
-    const int duration = 300; // Duração do piscar em milissegundos
-    const int pin = 2; // GPIO do LED embutido
-    digitalWrite(pin, HIGH);
-    delay(duration);
-    digitalWrite(pin, LOW);
-    delay(duration);
 }
