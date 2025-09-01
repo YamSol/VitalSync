@@ -1,6 +1,6 @@
 #include "lora.h"
 
-LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_M0_PIN, LORA_M1_PIN, LORA_AUX_PIN), isInitialized(false) {
+LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_AUX_PIN, LORA_M0_PIN, LORA_M1_PIN), isInitialized(false) {
     // Construtor
 }
 
@@ -11,7 +11,7 @@ bool LoRaReceiver::initLoRa() {
     // Inicializa o módulo E32
     e32ttl.begin();
         
-    // configureLoRaModule();
+    configureLoRaModule();
 
     // Aguarda estabilização
     delay(1000);
@@ -41,9 +41,9 @@ void LoRaReceiver::configureLoRaModule()
         Serial.println("Configuração atual obtida com sucesso!");
 
         // Define configurações específicas
-        configuration.ADDL = GATEWAY_ADDL; // Endereço baixo do Gateway
-        configuration.ADDH = GATEWAY_ADDH; // Endereço alto do Gateway
-        configuration.CHAN = CHANNEL;      // Canal 23
+        configuration.ADDL = 0x01; // Endereço baixo do Gateway
+        configuration.ADDH = 0x00; // Endereço alto do Gateway
+        configuration.CHAN = 23;      // Canal 23
         configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
         configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
         configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
@@ -54,7 +54,7 @@ void LoRaReceiver::configureLoRaModule()
         configuration.SPED.uartParity = MODE_00_8N1;
 
         // Aplica as configurações
-        ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_SAVE);
+        ResponseStatus rsConfig = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_LOSE);
         Serial.print("Status da aplicação da configuração: ");
         Serial.println(rsConfig.getResponseDescription());
 
@@ -96,16 +96,20 @@ ReceivedData LoRaReceiver::listenForData() {
         if (rc.status.code == 1) { // Sucesso
             Serial.print("Dados brutos recebidos: ");
             Serial.println(rc.data);
+
+            
             
             // Faz parse do JSON
-            ReceivedData parsedData;
-            parseJSON(rc.data, parsedData);
+            // ReceivedData parsedData;
+            // parseJSON(rc.data, parsedData);
             
-            Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
-            Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
-            Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
-            Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
-                
+            // Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
+            // Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
+            // Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
+            // Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
+               
+            // Retorna os dados fake
+            ReceivedData parsedData = {0, 0, 0.0};
             return parsedData;
         } else {
             Serial.println("Erro na recepção. Código: " + String(rc.status.code));
