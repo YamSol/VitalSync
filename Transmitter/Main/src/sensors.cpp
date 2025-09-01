@@ -68,9 +68,6 @@ SensorData SensorManager::readSensors() {
     data.oxygen_level = (int)pox.getSpO2();
 
     if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-        Serial.println("Heart Rate: " + String(data.heart_rate) + " BPM");
-        Serial.println("Oxygen Level: " + String(data.oxygen_level) + "%");
-        Serial.println("Temperature: " + String(data.temperature) + "°C");
         
         // Atualiza o timestamp do último relatório
         tsLastReport = millis();

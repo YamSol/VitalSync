@@ -13,13 +13,16 @@
 #include <Arduino.h>
 #include "sensors.h"
 #include "lora.h"
+#define button 18
 
 // Instâncias dos gerenciadores
 SensorManager sensorManager;
 LoRaManager loraManager;
+struct SensorData sensorDataBuffer[100];
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
+    pinMode(18, INPUT_PULLUP);
     delay(1000);
 
     // if(!sensorManager.initSensors()) {
@@ -44,6 +47,26 @@ void loop() {
     // 8. Aguarda próximo comando do tablet
 
     // SensorData data = sensorManager.readSensors();
+
+    if(digitalRead(18) == HIGH)
+    {
+        sensorManager.initSensors();
+
+        // Aguardando estabilização do sensor
+        for(int i = 0; i < 200; i++)
+        {
+            sensorManager.readSensors();
+            delay(100);
+        }
+
+        // Fazendo a leitura dos dados
+        for(int i = 0; i < 100; i++)
+        {
+            sensorDataBuffer[i] = sensorManager.readSensors();
+            delay(100);
+        }
+
+    }
     
     if (!loraManager.initLoRa()) {
         Serial.println("ERRO: Falha ao inicializar LoRa!");
