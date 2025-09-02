@@ -2,12 +2,15 @@
  * VitalSync - Transmitter
  * Sistema de monitoramento remoto para pacientes crônicos
  * 
- * Fluxo:
- * 1. Inicializa sensores
- * 2. Lê sinais vitais
- * 3. Liga o módulo LoRa
- * 4. Envia dados ao Gateway
- * 5. Desliga o módulo LoRa
+ * # Fluxo da aplicação
+ * 1. Recebeu comando "ler e enviar dados" do tablet
+ * 2. Liga sensores
+ * 3. Lê os sensores N vezes e armazenar num buffer
+ * 4. Desliga sensores
+ * 5. Liga o módulo LoRa
+ * 6. Envia os dados via LoRa
+ * 7. Desliga o módulo LoRa
+ * 8. Aguarda próximo comando do tablet
  */
 
 #include <Arduino.h>
@@ -36,19 +39,7 @@ void setup() {
 }
 
 void loop() {
-    // # Fluxo da aplicaçao, baseada em comandos recebidos do tablet
-    // 1. Recebeu comando "ler e enviar dados" do tablet
-    // 2. Liga sensores
-    // 3. Lê os sensores N vezes e armazenar num buffer
-    // 4. Desliga sensores
-    // 5. Liga o módulo LoRa
-    // 6. Envia os dados via LoRa
-    // 7. Desliga o módulo LoRa
-    // 8. Aguarda próximo comando do tablet
-
-    // SensorData data = sensorManager.readOximeter();
-
-    if(digitalRead(18) == HIGH)
+    
     {
         sensorManager.initSensors();
 
