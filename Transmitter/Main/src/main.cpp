@@ -33,42 +33,47 @@ void setup() {
 }
 
 void loop() {
+    bool buttonPressed = digitalRead(BUTTON_PIN) == LOW;
+
+    if(!buttonPressed) {
+        return;
+    }
     
+    sensorManager.initSensors();
+
+    // Aguardando estabilização do sensor
+    Serial.println("Aguardando estabilização do sensor...");
+    SensorData dataTemp;
+    for(int i = 0; i < 200; i++)
     {
-        sensorManager.initSensors();
+        sensorManager.readOximeter(dataTemp);
+        delay(100);
+    }
 
-        // Aguardando estabilização do sensor
-        Serial.println("Aguardando estabilização do sensor...");
-        SensorData dataTemp;
-        for(int i = 0; i < 200; i++)
-        {
-            sensorManager.readOximeter(dataTemp);
-            delay(100);
-        }
+    // Fazendo a leitura dos dados
+    Serial.println("Lendo dados do oxímetro...");
+    
+    for(int i = 0; i < 100; i++) {
+        sensorManager.readOximeter(sensorDataBuffer[i]);
+        delay(100);
+    }
+    
+    Serial.println("Leitura do oxímetro concluída... 10 segundos até a leitura de temperatura");
+    delay(10000);
+    
+    for(int i = 0; i < 100; i++) {
+        sensorManager.readTemperature(sensorDataBuffer[i]);
+        delay(100);
+    }
 
-        // Fazendo a leitura dos dados
-        Serial.println("Lendo dados do oxímetro...");
-        for(int i = 0; i < 100; i++)
-        {
-            sensorManager.readOximeter(sensorDataBuffer[i]);
-            delay(100);
-        }
-        Serial.println("Leitura do oxímetro concluída... 10 segundos até a leitura de temperatura");
-        delay(10000);
-        for(int i = 0; i < 100; i++)
-        {
-            sensorManager.readTemperature(sensorDataBuffer[i]);
-            delay(100);
-        }
-        Serial.println("Leitura de temperatura concluída.");
+    Serial.println("Leitura de temperatura concluída.");
 
-        for(int i = 0; i < 100; i++)
-        {
-            Serial.println("Heart Rate: " + String(sensorDataBuffer[i].heart_rate) + " BPM");
-            Serial.println("Oxygen Level: " + String(sensorDataBuffer[i].oxygen_level) + "%");
-            Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
-            Serial.println("-------------------------");
-        }
+    for(int i = 0; i < 100; i++) {
+        Serial.println("Heart Rate: " + String(sensorDataBuffer[i].heart_rate) + " BPM");
+        Serial.println("Oxygen Level: " + String(sensorDataBuffer[i].oxygen_level) + "%");
+        Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
+        Serial.println("-------------------------");
+    }
 
 
     
