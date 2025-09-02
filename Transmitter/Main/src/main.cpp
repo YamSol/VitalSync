@@ -17,11 +17,12 @@
 #include "sensors.h"
 #include "lora.h"
 #define BUTTON_PIN 18
+#define DATA_BUFFER_SIZE 100
 
 // Instâncias dos gerenciadores
 SensorManager sensorManager;
 LoRaManager loraManager;
-struct SensorData sensorDataBuffer[100];
+struct SensorData sensorDataBuffer[DATA_BUFFER_SIZE];
 bool isTransmitting = false;
 
 void setup() {    
@@ -54,29 +55,29 @@ void loop() {
 
     // Fazendo a leitura dos dados
     Serial.println("Lendo dados do oxímetro...");
-    
-    for(int i = 0; i < 100; i++) {
+
+    for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
         sensorManager.readOximeter(sensorDataBuffer[i]);
         delay(100);
     }
     
     Serial.println("Leitura do oxímetro concluída... 10 segundos até a leitura de temperatura");
     delay(10000);
-    
-    for(int i = 0; i < 100; i++) {
+    Serial.println("Lendo dados do termômetro...");
+    for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
         sensorManager.readTemperature(sensorDataBuffer[i]);
         delay(100);
     }
 
     Serial.println("Leitura de temperatura concluída.");
 
-    for(int i = 0; i < 100; i++) {
+    for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
+        Serial.println("DADO N" + String(i) + "-------------------");
         Serial.println("Heart Rate: " + String(sensorDataBuffer[i].heart_rate) + " BPM");
         Serial.println("Oxygen Level: " + String(sensorDataBuffer[i].oxygen_level) + "%");
         Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
-        Serial.println("-------------------------");
     }
 
+    // TODO: Enviando os dados via LoRa
 
-    
 }
