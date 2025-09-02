@@ -96,28 +96,6 @@ ReceivedData LoRaReceiver::listenForData() {
         if (rc.status.code == 1) { // Sucesso
             Serial.print("Dados brutos recebidos: ");
             Serial.println(rc.data);
-
-            // Leitura da String recebida que começa com \x01 e termina com \x02
-            // ************* PARSE DO JSON AQUI *************
-            if (rc.data.startsWith("\x01") && rc.data.endsWith("\x02")) {
-                // Remove os marcadores de início e fim
-                String jsonData = rc.data.substring(1, rc.data.length() - 1);
-                Serial.println("JSON extraído: " + jsonData);
-                
-                // Faz parse do JSON
-                ReceivedData parsedData;
-                if (parseJSON(jsonData, parsedData) == 0) {
-                    Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
-                    Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
-                    Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
-                    Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
-                    return parsedData;
-                } else {
-                    Serial.println("Erro ao fazer parse do JSON.");
-                }
-            } else {
-                Serial.println("Formato de dados inválido. Esperado início com \\x01 e fim com \\x02.");
-            }
             
             // Faz parse do JSON
             // ReceivedData parsedData;
@@ -159,7 +137,6 @@ int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     
     return 0;
 }
-
 
 void LoRaReceiver::printConfiguration() {
     // if (!isInitialized) {

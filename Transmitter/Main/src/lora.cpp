@@ -29,7 +29,7 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
     // Serial.println("Preparando envio de dados via LoRa...");
     
     // Cria JSON com os dados dos sensores
-    String jsonData = createJSON(data);
+    String jsonData = createJSONstring(data);
     
     if (jsonData.length() == 0) {
         // Serial.println("ERRO: Falha ao criar JSON!");
@@ -51,7 +51,7 @@ void LoRaManager::shutdownLoRa() {
     Serial.println("Módulo LoRa desligado!");
 }
 
-String LoRaManager::createJSON(const SensorData &data) {
+String LoRaManager::createJSONstring(const SensorData &data) {
     
     // Cria documento JSON COMPACTO (máximo 58 bytes)
     JsonDocument doc;
@@ -61,8 +61,11 @@ String LoRaManager::createJSON(const SensorData &data) {
     doc["temp"] = data.temperature;     // temperature -> temp
     
     // Serializa para string
-    String jsonString;
-    serializeJson(doc, jsonString);
+    String AUX;
+    serializeJson(doc, AUX);
+    String jsonString = "\x01"; // Flag de início dos dados
+    jsonString += AUX;
+    jsonString += "\x02"; // Flag de fim dos dados
 
     Serial.println("JSON compacto criado: " + jsonString + " (" + String(jsonString.length()) + " bytes)");
     return jsonString;

@@ -39,7 +39,7 @@ public:
 private:
     void configureLoRaModule();
     void printConfiguration();
-    String createJSON(const SensorData &data);
+    String createJSONstring(const SensorData &data);
     bool sendMessage(const String &message);
 };
 
