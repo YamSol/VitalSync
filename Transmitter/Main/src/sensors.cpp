@@ -36,7 +36,7 @@ bool SensorManager::initSensors() {
     return true;
 }
 
-float SensorManager::readTemperature() {
+void SensorManager::readTemperature(SensorData &data) {
     // Média de 10 leituras com calibração para melhor precisão
     uint32_t soma = 0;
     for (int i = 0; i < 10; i++) {
@@ -49,27 +49,21 @@ float SensorManager::readTemperature() {
     uint32_t voltage_mV = esp_adc_cal_raw_to_voltage((uint32_t)leituraADC, &adc_chars);
     float tensao = voltage_mV / 1000.0;
     float temperaturaC = tensao * 100; // Para LM35 (para TMP36 seria: (tensao - 0.5) * 100)
-    
-    return temperaturaC;
+
+    data.temperature = temperaturaC;
 }
 
-SensorData SensorManager::readSensors() {
-    SensorData data;
-    
+void SensorManager::readOximeter(SensorData &data) {
     // Atualiza o oxímetro para obter novos dados
     pox.update();
-    
-    // Ler temperatura
-    data.temperature = readTemperature();
+    delay(10);
+
 
     // Ler frequência cardíaca e nível de oxigênio
     data.heart_rate = (int)pox.getHeartRate();
     data.oxygen_level = (int)pox.getSpO2();
 
     if (millis() - tsLastReport > REPORTING_PERIOD_MS) {
-        Serial.println("Heart Rate: " + String(data.heart_rate) + " BPM");
-        Serial.println("Oxygen Level: " + String(data.oxygen_level) + "%");
-        Serial.println("Temperature: " + String(data.temperature) + "°C");
         
         // Atualiza o timestamp do último relatório
         tsLastReport = millis();
@@ -79,5 +73,5 @@ SensorData SensorManager::readSensors() {
         delay(10);
         pox.resume();
     }
-    return data;
 }
+

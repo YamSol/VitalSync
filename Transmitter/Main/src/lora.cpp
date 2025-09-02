@@ -39,9 +39,7 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
     
     // Envia a mensagem compacta
     // jsonData = jsonData + '\n';
-    // bool success = sendMessage(jsonData);
-    String msg = "THIS IS SPARTA";
-    bool success = sendMessage(msg);
+    bool success = sendMessage(jsonData);
     
     return success;
 }

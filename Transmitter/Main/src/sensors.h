@@ -27,7 +27,8 @@ class SensorManager {
 public:
     SensorManager();
     bool initSensors();
-    SensorData readSensors();
+    void readOximeter(SensorData &data);
+    void readTemperature(SensorData &data);
     
     // Callback para detecção de batimento cardíaco
     static void onBeatDetected();
@@ -36,8 +37,6 @@ private:
     PulseOximeter pox;              // Instância do oxímetro MAX30100
     esp_adc_cal_characteristics_t adc_chars;  // Características de calibração do ADC
     uint32_t tsLastReport;          // Timestamp do último relatório
-    
-    float readTemperature();        // Lê o sensor de temperatura LM35
     bool validateSensorData(const SensorData &data);  // Valida os dados dos sensores
 };
 
