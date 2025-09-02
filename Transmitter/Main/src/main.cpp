@@ -17,7 +17,7 @@
 #include "sensors.h"
 #include "lora.h"
 #define BUTTON_PIN 18
-#define DATA_BUFFER_SIZE 100
+#define DATA_BUFFER_SIZE 10
 
 // Instâncias dos gerenciadores
 SensorManager sensorManager;
@@ -42,10 +42,13 @@ void loop() {
     }
     isSendingData = true;
     
+    // SENSORES
+    Serial.println("Iniciando leitura dos sensores");
+
     sensorManager.initSensors();
 
     // Aguardando estabilização do sensor
-    Serial.println("Aguardando estabilização do sensor...");
+    Serial.println("1. Aguardando estabilização do sensor");
     SensorData dataTemp;
     for(int i = 0; i < 200; i++)
     {
@@ -54,28 +57,42 @@ void loop() {
     }
 
     // Fazendo a leitura dos dados
-    Serial.println("Lendo dados do oxímetro...");
+    Serial.println("2. Lendo dados do oxímetro");
 
     for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
         sensorManager.readOximeter(sensorDataBuffer[i]);
         delay(100);
     }
-    
-    Serial.println("Leitura do oxímetro concluída... 10 segundos até a leitura de temperatura");
+
+    Serial.println("OK! Aguardando 10 segundos para leitura do termômetro");
+
     delay(10000);
-    Serial.println("Lendo dados do termômetro...");
+    
+    Serial.println("3. Lendo dados do termômetro");
     for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
         sensorManager.readTemperature(sensorDataBuffer[i]);
         delay(100);
     }
 
-    Serial.println("Leitura de temperatura concluída.");
+    Serial.println("OK!");
 
+    // LORA
+    Serial.println("Iniciando transmissão via LoRa"); 
+
+    // inicializando o módulo
+    loraManager.initLoRa();
+
+    // enviando os dados
     for(int i = 0; i < DATA_BUFFER_SIZE; i++) {
-        Serial.println("DADO N" + String(i) + "-------------------");
-        Serial.println("Heart Rate: " + String(sensorDataBuffer[i].heart_rate) + " BPM");
-        Serial.println("Oxygen Level: " + String(sensorDataBuffer[i].oxygen_level) + "%");
-        Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
+        Serial.println("DADO N" + String(i+1) + 
+        ": Temp=" + String(sensorDataBuffer[i].temperature) + 
+        "C, HR=" + String(sensorDataBuffer[i].heart_rate) + 
+        "bpm, SpO2=" + String(sensorDataBuffer[i].oxygen_level) + "%");
+
+
+        int res = loraManager.sendSensorData(sensorDataBuffer[i]);
+        Serial.println(res ? "Enviado com sucesso!" : "Falha no envio!");
+        delay(100);
     }
 
     isSendingData = false;
