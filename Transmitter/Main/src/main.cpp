@@ -23,7 +23,7 @@
 SensorManager sensorManager;
 LoRaManager loraManager;
 struct SensorData sensorDataBuffer[DATA_BUFFER_SIZE];
-bool isTransmitting = false;
+bool isSendingData = false;
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
@@ -37,10 +37,10 @@ void setup() {
 void loop() {
     bool buttonPressed = digitalRead(BUTTON_PIN) == LOW;
 
-    if(!buttonPressed || isTransmitting) {
+    if(!buttonPressed || isSendingData) {
         return;
     }
-    isTransmitting = true;
+    isSendingData = true;
     
     sensorManager.initSensors();
 
@@ -78,6 +78,5 @@ void loop() {
         Serial.println("Temperature: " + String(sensorDataBuffer[i].temperature) + "°C");
     }
 
-    // TODO: Enviando os dados via LoRa
-
+    isSendingData = false;
 }
