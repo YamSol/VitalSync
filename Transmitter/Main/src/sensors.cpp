@@ -58,6 +58,7 @@ void SensorManager::readOximeter(SensorData &data) {
     pox.update();
     delay(10);
 
+
     // Ler frequência cardíaca e nível de oxigênio
     data.heart_rate = (int)pox.getHeartRate();
     data.oxygen_level = (int)pox.getSpO2();
