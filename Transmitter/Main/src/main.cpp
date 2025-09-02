@@ -16,7 +16,7 @@
 #include <Arduino.h>
 #include "sensors.h"
 #include "lora.h"
-#define button 18
+#define BUTTON_PIN 18
 
 // Instâncias dos gerenciadores
 SensorManager sensorManager;
@@ -25,7 +25,7 @@ struct SensorData sensorDataBuffer[100];
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
-    pinMode(18, INPUT_PULLUP);
+    pinMode(BUTTON_PIN, INPUT_PULLUP);
     delay(1000);
 
     // if(!sensorManager.initSensors()) {
