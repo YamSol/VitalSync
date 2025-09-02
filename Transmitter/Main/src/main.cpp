@@ -22,6 +22,7 @@
 SensorManager sensorManager;
 LoRaManager loraManager;
 struct SensorData sensorDataBuffer[100];
+bool isTransmitting = false;
 
 void setup() {    
     pinMode(2, OUTPUT); // Configura o pino do LED embutido como saída
@@ -35,9 +36,10 @@ void setup() {
 void loop() {
     bool buttonPressed = digitalRead(BUTTON_PIN) == LOW;
 
-    if(!buttonPressed) {
+    if(!buttonPressed || isTransmitting) {
         return;
     }
+    isTransmitting = true;
     
     sensorManager.initSensors();
 
