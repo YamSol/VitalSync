@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <vector>
 #include "lora.h"
 #include "network.h"
 
@@ -50,46 +51,70 @@ void loop() {
         return;
     }
     
-    // [ETAPA 1] Escuta dados via LoRa
-    ReceivedData receivedData = loraReceiver.listenForData();
-    
+    // [ETAPA 1] Escuta dados via LoRa - agora processa múltiplos dados
+    std::vector<ReceivedData> receivedDataList = loraReceiver.listenForMultipleData();
+
     // Se dados válidos foram recebidos
-    if (receivedData.heart_rate != 0 && receivedData.oxygen_level != 0 && receivedData.temperature != 0.0) {
-        Serial.println("\n[ETAPA 2] Dados válidos recebidos!");
+    if (!receivedDataList.empty()) {
+        Serial.println("\n[ETAPA 2] " + String(receivedDataList.size()) + " conjunto(s) de dados válidos recebidos!");
         
         // Pisca LED para indicar recepção
         blinkLED(3, 300);
-        Serial.println("Dados recebidos:");
-        Serial.println(" - Heart Rate: " + String(receivedData.heart_rate) +
-                            " BPM\n - Oxygen Level: " + String(receivedData.oxygen_level) + 
-                            "%\n - Temperature: " + String(receivedData.temperature) + "°C");
         
-        // // [ETAPA 3] Conecta ao WiFi
-        // Serial.println("\n[ETAPA 3] Conectando ao WiFi...");
+        // [ETAPA 3] Conecta ao WiFi
+        Serial.println("\n[ETAPA 3] Conectando ao WiFi...");
         
-        // if (networkManager.connectWiFi()) {
-        //     Serial.println("✅ WiFi conectado!");
-        //  
-        //     // [ETAPA 4] Envia dados para API
-        //     Serial.println("\n[ETAPA 4] Enviando dados para API...");
-        //  
-        //     if (networkManager.sendDataToAPI(receivedData)) {
-        //         Serial.println("\n✅ SUCESSO: Dados enviados para API!");
-        //         blinkLED(5, 100); // LED rápido = sucesso
-        //     } else {
-        //         Serial.println("\n❌ ERRO: Falha no envio para API!");
-        //         blinkLED(10, 50); // LED muito rápido = erro
-        //     }
-        //    
-        //     // [ETAPA 5] Desconecta WiFi
-        //     Serial.println("\n[ETAPA 5] Desconectando WiFi...");
-        //     networkManager.disconnectWiFi();
-        //
-        // } else {
-        //     Serial.println("❌ Falha na conexão WiFi!");
-        //     Serial.println("Tentativa de WiFi adiada por 30 segundos...");
-        //     lastWiFiAttempt = millis();
-        // }
+        if (networkManager.connectWiFi()) {
+            Serial.println("✅ WiFi conectado!");
+         
+            // [ETAPA 4] Envia todos os dados para API
+            Serial.println("\n[ETAPA 4] Enviando " + String(receivedDataList.size()) + " conjunto(s) de dados para API...");
+            
+            int successCount = 0;
+            int errorCount = 0;
+            
+            for (size_t i = 0; i < receivedDataList.size(); i++) {
+                ReceivedData currentData = receivedDataList[i];
+                
+                Serial.println("\n--- ENVIANDO DADOS #" + String(i + 1) + " ---");
+                Serial.println("Device ID: " + currentData.device_id);
+                Serial.println("Heart Rate: " + String(currentData.heart_rate) + " BPM");
+                Serial.println("Oxygen Level: " + String(currentData.oxygen_level) + "%");
+                Serial.println("Temperature: " + String(currentData.temperature) + "°C");
+                
+                if (networkManager.sendDataToAPI(currentData)) {
+                    Serial.println("✅ Dados #" + String(i + 1) + " enviados com sucesso!");
+                    successCount++;
+                } else {
+                    Serial.println("❌ Erro no envio dos dados #" + String(i + 1));
+                    errorCount++;
+                }
+                
+                // Pequeno delay entre envios para não sobrecarregar a API
+                delay(500);
+            }
+            
+            Serial.println("\n📊 RESUMO DO ENVIO:");
+            Serial.println("✅ Sucessos: " + String(successCount));
+            Serial.println("❌ Erros: " + String(errorCount));
+            Serial.println("📦 Total processado: " + String(receivedDataList.size()));
+            
+            if (successCount > 0) {
+                blinkLED(5, 100); // LED rápido = sucesso
+            }
+            if (errorCount > 0) {
+                blinkLED(10, 50); // LED muito rápido = erro
+            }
+           
+            // [ETAPA 5] Desconecta WiFi
+            Serial.println("\n[ETAPA 5] Desconectando WiFi...");
+            networkManager.disconnectWiFi();
+        
+        } else {
+            Serial.println("❌ Falha na conexão WiFi!");
+            Serial.println("Tentativa de WiFi adiada por 30 segundos...");
+            lastWiFiAttempt = millis();
+        }
       
         Serial.println("\n[GATEWAY] Retornando ao modo escuta LoRa...");
         Serial.println("" + String("-").substring(0,50) + "\n");

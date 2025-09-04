@@ -16,6 +16,9 @@
 #define TEMP_SENSOR_PIN 36       // Pino para o sensor de temperatura LM35
 #define REPORTING_PERIOD_MS 2000 // Período para relatar os dados
 
+// ID único do transmitter
+#define TRANSMITTER_ID "TR-001"
+
 // Estrutura para armazenar dados dos sensores
 struct SensorData {
     float temperature;

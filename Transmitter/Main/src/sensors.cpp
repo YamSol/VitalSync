@@ -1,4 +1,5 @@
 #include "sensors.h"
+#include <WiFi.h>
 
 // Variável global estática para callback
 static SensorManager* instance = nullptr;

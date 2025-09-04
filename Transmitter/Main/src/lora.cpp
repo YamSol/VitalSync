@@ -8,9 +8,7 @@ bool LoRaManager::initLoRa() {
     loraHardwareSerial.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
     e32ttl.begin();
     
-    Serial.println("START - Configurando modulo");
     configureLoRaModule();
-    Serial.println("END - Configurando modulo");
     
     
     printConfiguration();
@@ -26,21 +24,15 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
         return false;
     }
     
-    // Serial.println("Preparando envio de dados via LoRa...");
-    
     // Cria JSON com os dados dos sensores
     String jsonData = createJSON(data);
     
     if (jsonData.length() == 0) {
-        // Serial.println("ERRO: Falha ao criar JSON!");
         return false;
     }
-    // Serial.println("JSON criado: " + jsonData);
+    Serial.println("JSON criado: " + jsonData);
     
-    // Envia a mensagem compacta
-    // jsonData = jsonData + '\n';
-    bool success = sendMessage(jsonData);
-    
+    bool success = sendMessage(jsonData);    
     return success;
 }
 
@@ -54,6 +46,7 @@ String LoRaManager::createJSON(const SensorData &data) {
     // Cria documento JSON COMPACTO (máximo 58 bytes)
     JsonDocument doc;
     
+    doc["id"] = TRANSMITTER_ID;         // ID do transmitter definido no header
     doc["hr"] = data.heart_rate;        // heart_rate -> hr
     doc["ox"] = data.oxygen_level;      // oxygen_level -> ox  
     doc["temp"] = data.temperature;     // temperature -> temp
@@ -67,20 +60,14 @@ String LoRaManager::createJSON(const SensorData &data) {
 }
 
 bool LoRaManager::sendMessage(const String &message) {
-    // Serial.println("Enviando mensagem via UART para E32...");
-    
-    // Envia via biblioteca E32 (igual ao código funcional)
-    // ResponseStatus rs = e32ttl.sendMessage(message);
-    ResponseStatus rs = e32ttl.sendFixedMessage(GATEWAY_ADDH, GATEWAY_ADDL, CHANNEL, message);
-
-    // Verificar se é SUCCESS (código 1 significa sucesso)
-    if (rs.code == 1) {
-        // Serial.println("Mensagem enviada com sucesso!");
-        return true;
-    } else {
-        // Serial.println("ERRO no envio da mensagem. Código: " + String(rs.code));
+    if (message.length() > 58) {
+        Serial.println("ERRO: Mensagem muito longa para transmissão LoRa!");
         return false;
     }
+
+    ResponseStatus rs = e32ttl.sendFixedMessage(GATEWAY_ADDH, GATEWAY_ADDL, CHANNEL, message);
+
+    return (rs.code == 1);
 }
 
 void LoRaManager::configureLoRaModule()
@@ -101,10 +88,9 @@ void LoRaManager::configureLoRaModule()
 
     // Define configurações específicas
     configuration.ADDH = 0x00; // Endereço alto do Transmitter
-    configuration.ADDL = 0x01; // Endereço baixo do Transmitter
+    configuration.ADDL = 0x02; // Endereço baixo do Transmitter
     configuration.CHAN = 23;
-    // configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
-    configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
+    configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
     configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
     configuration.OPTION.transmissionPower = POWER_20;
     configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;

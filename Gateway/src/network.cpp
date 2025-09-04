@@ -49,9 +49,15 @@ bool NetworkManager::sendDataToAPI(const ReceivedData &data) {
     HTTPClient http;
     http.begin(API_ENDPOINT);
     http.addHeader("Content-Type", "application/json");
-    http.addHeader("X-API-Key", API_KEY);
+    http.addHeader("x-api-key", API_KEY);
     http.setTimeout(HTTP_TIMEOUT_MS);
     
+    // Requisicao completa
+    Serial.println("Requisicao completa");
+    Serial.println("Endpoint: " + String(API_ENDPOINT));
+    Serial.println("API Key: " + String(API_KEY));
+    Serial.println("Timeout: " + String(HTTP_TIMEOUT_MS) + " ms");
+
     // Envia POST request
     Serial.println("Enviando POST para: " + String(API_ENDPOINT));
     int httpResponseCode = http.POST(jsonPayload);
@@ -89,13 +95,11 @@ void NetworkManager::disconnectWiFi() {
 
 String NetworkManager::createAPIJSON(const ReceivedData &data) {
     Serial.println("Criando JSON para API...");
-    
-    JsonDocument doc;
-    
+    StaticJsonDocument<200> doc;
+    doc["transmitter_id"] = data.device_id;  // ID do transmissor
+    doc["temperature"] = data.temperature;
     doc["heart_rate"] = data.heart_rate;
     doc["oxygen_level"] = data.oxygen_level;
-    doc["temperature"] = data.temperature;
-    
     String jsonString;
     serializeJson(doc, jsonString);
     
