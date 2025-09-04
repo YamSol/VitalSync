@@ -5,15 +5,20 @@ LoRaReceiver::LoRaReceiver() : serialLoRa(2), e32ttl(&serialLoRa, LORA_AUX_PIN, 
 }
 
 bool LoRaReceiver::initLoRa() { 
+    Serial.println("Iniciando configuração do módulo LoRa E32...");
+    
     // Inicializa Serial para comunicação com E32 (igual ao código funcional)
     serialLoRa.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
+    Serial.println("Serial LoRa configurado (RX: " + String(LORA_RX_PIN) + ", TX: " + String(LORA_TX_PIN) + ")");
     
     // Inicializa o módulo E32
     e32ttl.begin();
+    Serial.println("Módulo E32 inicializado");
         
     configureLoRaModule();
 
     // Aguarda estabilização
+    Serial.println("Aguardando estabilização...");
     delay(1000);
 
     // Imprime configuração atual
@@ -44,7 +49,7 @@ void LoRaReceiver::configureLoRaModule()
         configuration.ADDL = 0x01; // Endereço baixo do Gateway
         configuration.ADDH = 0x00; // Endereço alto do Gateway
         configuration.CHAN = 23;      // Canal 23
-        configuration.OPTION.fixedTransmission = FT_TRANSPARENT_TRANSMISSION;
+        configuration.OPTION.fixedTransmission = FT_FIXED_TRANSMISSION;
         configuration.OPTION.ioDriveMode = IO_D_MODE_PUSH_PULLS_PULL_UPS;
         configuration.OPTION.wirelessWakeupTime = WAKE_UP_250;
         configuration.OPTION.transmissionPower = POWER_20;
@@ -83,8 +88,8 @@ ReceivedData LoRaReceiver::listenForData() {
         return emptyData;
     }
     
-    // Verifica se há dados disponíveis (igual ao código funcional)
-    if (e32ttl.available() > 1) {
+    // Verifica se há dados disponíveis
+    if (e32ttl.available() > 0) {
         Serial.println("\n[GATEWAY] Dados recebidos via LoRa!");
         
         // Recebe a mensagem
@@ -102,20 +107,16 @@ ReceivedData LoRaReceiver::listenForData() {
             int parseResult = parseJSON(rc.data, parsedData);
             
             if (parseResult == 0) {
-                Serial.println(String("=").substring(0,10)+"Dados válidos recebidos!"+String("=").substring(0,10));
-                Serial.println("Transmitter ID: " + parsedData.device_id);
+                Serial.println(String("=").substring(0,40) + " DADOS VÁLIDOS " + String("=").substring(0,40));
+                Serial.println("Device ID: " + parsedData.device_id);
                 Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
                 Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
                 Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
-                
+                Serial.println(String("=").substring(0,90));
                 return parsedData;
             } else {
                 Serial.println("Erro no parse do JSON recebido");
             }
-               
-            // Retorna dados vazios se o parse falhar
-            ReceivedData emptyParseData = {"", 0, 0, 0.0};
-            return emptyParseData;
         } else {
             Serial.println("Erro na recepção. Código: " + String(rc.status.code));
         }
@@ -126,6 +127,13 @@ ReceivedData LoRaReceiver::listenForData() {
 
 int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     Serial.println("Fazendo parse do JSON recebido...");
+    Serial.println("JSON para parse: " + jsonData);
+    
+    // Inicializa dados com valores padrão
+    data.device_id = "";
+    data.heart_rate = -1;
+    data.oxygen_level = -1;
+    data.temperature = 14.0;
     
     // Cria documento JSON para parse
     JsonDocument doc;
@@ -136,11 +144,35 @@ int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
         return 1;
     }
     
+    Serial.println("JSON parseado com sucesso!");
+    
     // Extrai dados (formato compacto do transmitter)
-    if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
-    if (doc.containsKey("hr")) data.heart_rate = doc["hr"];
-    if (doc.containsKey("ox")) data.oxygen_level = doc["ox"];
-    if (doc.containsKey("temp")) data.temperature = doc["temp"];
+    if (doc.containsKey("id")) {
+        data.device_id = doc["id"].as<String>();
+        Serial.println("ID encontrado: " + data.device_id);
+    }
+    
+    if (doc.containsKey("hr")) {
+        data.heart_rate = doc["hr"];
+        Serial.println("Heart Rate encontrado: " + String(data.heart_rate));
+    }
+    
+    if (doc.containsKey("ox")) {
+        data.oxygen_level = doc["ox"];
+        Serial.println("Oxygen Level encontrado: " + String(data.oxygen_level));
+    }
+    
+    if (doc.containsKey("temp")) {
+        data.temperature = doc["temp"];
+        Serial.println("Temperature encontrada: " + String(data.temperature));
+    }
+    
+    // Valida se todos os dados foram extraídos
+    if (data.device_id.length() == 0 || data.heart_rate == -1 || 
+        data.oxygen_level == -1 || data.temperature == 14.0) {
+        Serial.println("ERRO: Dados incompletos após parse JSON!");
+        return 1;
+    }
     
     return 0;
 }

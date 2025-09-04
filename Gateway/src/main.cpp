@@ -28,47 +28,38 @@ void setup() {
     Serial.println("\n[ETAPA 1] Inicializando módulo LoRa...");
     
     // Inicializa receptor LoRa
-    // if (loraReceiver.initLoRa()) {
-    //     Serial.println("✅ LoRa inicializado com sucesso!");
-    //     systemReady = true;
+    if (loraReceiver.initLoRa()) {
+        Serial.println("✅ LoRa inicializado com sucesso!");
+        systemReady = true;
         
-    //     blinkLED(2, 500);
-    // } else {
-    //     Serial.println("❌ Falha na inicialização do LoRa!");
-    //     systemReady = false;
-    // }
+        blinkLED(2, 500);
+    } else {
+        Serial.println("❌ Falha na inicialização do LoRa!");
+        systemReady = false;
+    }
     
     Serial.println("\n[GATEWAY] Sistema pronto - Modo escuta LoRa ativo");
     Serial.println("Aguardando dados do Transmitter...\n");
 }
 
 void loop() {
-    // if (!systemReady) {
-    //     Serial.println("Sistema não está pronto. Tentando reinicializar...");
-    //     delay(5000);
-    //     ESP.restart();
-    //     return;
-    // }
+    if (!systemReady) {
+        Serial.println("Sistema não está pronto. Tentando reinicializar...");
+        delay(5000);
+        ESP.restart();
+        return;
+    }
     
     // [ETAPA 1] Escuta dados via LoRa
-    // ReceivedData receivedData = loraReceiver.listenForData();
-    ReceivedData receivedData = {
-        .device_id = "TR-001",
-        .heart_rate = 72,
-        .oxygen_level = 98,
-        .temperature = 36.5
-    };
+    ReceivedData receivedData = loraReceiver.listenForData();
 
-    // Se dados válidos foram recebidos
-    if (receivedData.heart_rate != 0 && receivedData.oxygen_level != 0 && receivedData.temperature != 0.0) {
+    // Se dados válidos foram recebidos (qualquer campo diferente de zero)
+    if (!receivedData.device_id.isEmpty() && 
+        (receivedData.heart_rate != 0 || receivedData.oxygen_level != 0 || receivedData.temperature != 0.0)) {
         Serial.println("\n[ETAPA 2] Dados válidos recebidos!");
         
         // Pisca LED para indicar recepção
-        // blinkLED(3, 300);
-        // Serial.println("Dados recebidos:");
-        // Serial.println(" - Heart Rate: " + String(receivedData.heart_rate) +
-        //                     " BPM\n - Oxygen Level: " + String(receivedData.oxygen_level) + 
-        //                     "%\n - Temperature: " + String(receivedData.temperature) + "°C");
+        blinkLED(3, 300);
         
         // [ETAPA 3] Conecta ao WiFi
         Serial.println("\n[ETAPA 3] Conectando ao WiFi...");

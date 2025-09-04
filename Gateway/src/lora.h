@@ -13,8 +13,8 @@
 #define LORA_AUX_PIN 2
 
 // Definições de comunicação LoRa
-#define GATEWAY_ADDH 0xFF    // Endereço alto do Gateway
-#define GATEWAY_ADDL 0xFF    // Endereço baixo do Gateway (0xFFFF)
+#define GATEWAY_ADDH 0x00    // Endereço alto do Gateway
+#define GATEWAY_ADDL 0x01    // Endereço baixo do Gateway (0x0001)
 #define CHANNEL 0x17         // Canal 23 (0x17 em hex)
 
 // Estrutura para dados recebidos
