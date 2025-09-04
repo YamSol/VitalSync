@@ -92,9 +92,10 @@ String NetworkManager::createAPIJSON(const ReceivedData &data) {
     
     JsonDocument doc;
     
+    doc["transmitter_id"] = data.device_id;  // ID do transmitter
+    doc["temperature"] = data.temperature;
     doc["heart_rate"] = data.heart_rate;
     doc["oxygen_level"] = data.oxygen_level;
-    doc["temperature"] = data.temperature;
     
     String jsonString;
     serializeJson(doc, jsonString);

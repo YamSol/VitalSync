@@ -97,20 +97,25 @@ ReceivedData LoRaReceiver::listenForData() {
             Serial.print("Dados brutos recebidos: ");
             Serial.println(rc.data);
 
-            
-            
             // Faz parse do JSON
-            // ReceivedData parsedData;
-            // parseJSON(rc.data, parsedData);
+            ReceivedData parsedData;
+            int parseResult = parseJSON(rc.data, parsedData);
             
-            // Serial.println(String("=",10)+"Dados válidos recebidos!"+String("=",10));
-            // Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
-            // Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
-            // Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
+            if (parseResult == 0) {
+                Serial.println(String("=").substring(0,10)+"Dados válidos recebidos!"+String("=").substring(0,10));
+                Serial.println("Transmitter ID: " + parsedData.device_id);
+                Serial.println("Heart Rate: " + String(parsedData.heart_rate) + " BPM");
+                Serial.println("Oxygen Level: " + String(parsedData.oxygen_level) + "%");
+                Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
+                
+                return parsedData;
+            } else {
+                Serial.println("Erro no parse do JSON recebido");
+            }
                
-            // Retorna os dados fake
-            ReceivedData parsedData = {"", 0, 0, 0.0};
-            return parsedData;
+            // Retorna dados vazios se o parse falhar
+            ReceivedData emptyParseData = {"", 0, 0, 0.0};
+            return emptyParseData;
         } else {
             Serial.println("Erro na recepção. Código: " + String(rc.status.code));
         }

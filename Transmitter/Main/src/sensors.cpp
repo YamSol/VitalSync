@@ -1,4 +1,5 @@
 #include "sensors.h"
+#include <WiFi.h>
 
 // Variável global estática para callback
 static SensorManager* instance = nullptr;
@@ -37,6 +38,9 @@ bool SensorManager::initSensors() {
 }
 
 void SensorManager::readTemperature(SensorData &data) {
+    // Define o ID único do transmitter (baseado no MAC address do ESP32)
+    data.device_id = "TX-" + WiFi.macAddress().substring(9); // Últimos 6 caracteres do MAC
+    
     // Média de 10 leituras com calibração para melhor precisão
     uint32_t soma = 0;
     for (int i = 0; i < 10; i++) {
