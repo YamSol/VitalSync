@@ -54,6 +54,7 @@ String LoRaManager::createJSON(const SensorData &data) {
     // Cria documento JSON COMPACTO (máximo 58 bytes)
     JsonDocument doc;
     
+    doc["id"] = data.device_id;         // device_id -> id
     doc["hr"] = data.heart_rate;        // heart_rate -> hr
     doc["ox"] = data.oxygen_level;      // oxygen_level -> ox  
     doc["temp"] = data.temperature;     // temperature -> temp

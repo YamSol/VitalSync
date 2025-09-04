@@ -19,6 +19,7 @@
 
 // Estrutura para dados recebidos
 struct ReceivedData {
+    String device_id;      // Identificador único do dispositivo
     int heart_rate;
     int oxygen_level;
     float temperature;

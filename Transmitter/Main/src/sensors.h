@@ -18,6 +18,7 @@
 
 // Estrutura para armazenar dados dos sensores
 struct SensorData {
+    String device_id;     // Identificador único do dispositivo
     float temperature;
     int heart_rate;
     int oxygen_level;

@@ -76,7 +76,7 @@ void LoRaReceiver::configureLoRaModule()
 }
 
 ReceivedData LoRaReceiver::listenForData() {
-    ReceivedData emptyData = {0, 0, 0.0};
+    ReceivedData emptyData = {"", 0, 0, 0.0};
     
     if (!isInitialized) {
         Serial.println("ERRO: Módulo LoRa não inicializado!");
@@ -109,7 +109,7 @@ ReceivedData LoRaReceiver::listenForData() {
             // Serial.println("Temperature: " + String(parsedData.temperature) + "°C");
                
             // Retorna os dados fake
-            ReceivedData parsedData = {0, 0, 0.0};
+            ReceivedData parsedData = {"", 0, 0, 0.0};
             return parsedData;
         } else {
             Serial.println("Erro na recepção. Código: " + String(rc.status.code));
@@ -132,7 +132,7 @@ int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     }
     
     // Extrai dados (formato compacto do transmitter)
-    // if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
+    if (doc.containsKey("id")) data.device_id = doc["id"].as<String>();
     if (doc.containsKey("hr")) data.heart_rate = doc["hr"];
     if (doc.containsKey("ox")) data.oxygen_level = doc["ox"];
     if (doc.containsKey("temp")) data.temperature = doc["temp"];
