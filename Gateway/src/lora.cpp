@@ -14,18 +14,30 @@ bool LoRaReceiver::initLoRa() {
     // Inicializa o módulo E32
     e32ttl.begin();
     Serial.println("Módulo E32 inicializado");
-        
+    
+    // Aguarda estabilização inicial
+    Serial.println("Aguardando estabilização inicial...");
+    delay(2000);
+    
     configureLoRaModule();
 
-    // Aguarda estabilização
-    Serial.println("Aguardando estabilização...");
-    delay(1000);
+    // Aguarda estabilização após configuração
+    Serial.println("Aguardando estabilização após configuração...");
+    delay(2000);
 
     // Imprime configuração atual
     printConfiguration();
     
+    // Limpa buffer que pode ter dados residuais
+    Serial.println("Limpando buffer de recepção...");
+    while (e32ttl.available() > 0) {
+        e32ttl.receiveMessage();
+        delay(100);
+    }
+    
     isInitialized = true;
     Serial.println("Módulo LoRa E32 inicializado com sucesso!");
+    Serial.println("Gateway pronto para receber dados do Transmitter TR-001");
     
     return true;
 }
@@ -69,12 +81,38 @@ void LoRaReceiver::configureLoRaModule()
         }
         else
         {
-            Serial.println("Erro ao aplicar configurações!");
+            Serial.println("Erro ao aplicar configurações! Tentando novamente...");
+            delay(1000);
+            
+            // Segunda tentativa
+            ResponseStatus rsConfig2 = e32ttl.setConfiguration(configuration, WRITE_CFG_PWR_DWN_LOSE);
+            Serial.print("Status da segunda tentativa: ");
+            Serial.println(rsConfig2.getResponseDescription());
+            
+            if (rsConfig2.code == 1) {
+                Serial.println("Configurações aplicadas na segunda tentativa!");
+            } else {
+                Serial.println("ERRO: Falha nas duas tentativas de configuração!");
+            }
         }
     }
     else
     {
-        Serial.println("Erro ao obter configuração atual!");
+        Serial.println("Erro ao obter configuração atual! Tentando reinicializar...");
+        delay(1000);
+        
+        // Reinicializa e tenta novamente
+        e32ttl.begin();
+        delay(1000);
+        
+        ResponseStructContainer c2 = e32ttl.getConfiguration();
+        if (c2.status.code == 1) {
+            Serial.println("Configuração obtida na segunda tentativa!");
+            // Aplica configuração na segunda tentativa...
+        } else {
+            Serial.println("ERRO CRÍTICO: Não foi possível comunicar com o módulo E32!");
+        }
+        c2.close();
     }
 
     c.close();
@@ -102,7 +140,7 @@ ReceivedData LoRaReceiver::listenForData() {
             Serial.print("Dados brutos recebidos: ");
             Serial.println(rc.data);
 
-            // Faz parse do JSON
+            // Faz parse do JSON individual
             ReceivedData parsedData;
             int parseResult = parseJSON(rc.data, parsedData);
             
@@ -123,6 +161,97 @@ ReceivedData LoRaReceiver::listenForData() {
     }
     
     return emptyData;
+}
+
+std::vector<ReceivedData> LoRaReceiver::listenForMultipleData() {
+    std::vector<ReceivedData> dataList;
+    
+    if (!isInitialized) {
+        Serial.println("ERRO: Módulo LoRa não inicializado!");
+        return dataList;
+    }
+    
+    // Verifica se há dados disponíveis
+    if (e32ttl.available() > 0) {
+        Serial.println("\n[GATEWAY] Iniciando coleta de múltiplas mensagens LoRa...");
+        
+        // Coleta múltiplas mensagens durante um período
+        unsigned long startTime = millis();
+        const unsigned long COLLECT_TIMEOUT = 3000; // 3 segundos para coletar mensagens
+        int messageCount = 0;
+        
+        while ((millis() - startTime) < COLLECT_TIMEOUT) {
+            if (e32ttl.available() > 0) {
+                messageCount++;
+                Serial.println("\n[GATEWAY] Processando mensagem #" + String(messageCount));
+                
+                // Recebe cada mensagem individual
+                ResponseContainer rc = e32ttl.receiveMessage();
+                
+                Serial.print("Status da recepção: ");
+                Serial.println(rc.status.getResponseDescription());
+                
+                if (rc.status.code == 1) { // Sucesso
+                    Serial.print("Dados recebidos: ");
+                    Serial.println(rc.data);
+                    
+                    // DEBUG: Mostra dados em formato hex/decimal
+                    Serial.print("Dados em HEX: ");
+                    for (int i = 0; i < rc.data.length(); i++) {
+                        Serial.print(String(rc.data.charAt(i), HEX) + " ");
+                    }
+                    Serial.println();
+                    
+                    Serial.print("Dados em ASCII: ");
+                    for (int i = 0; i < rc.data.length(); i++) {
+                        char c = rc.data.charAt(i);
+                        if (c >= 32 && c <= 126) {
+                            Serial.print(c);
+                        } else {
+                            Serial.print("[" + String((int)c) + "]");
+                        }
+                    }
+                    Serial.println();
+
+                    // Filtra dados válidos (deve começar com '{' para ser JSON)
+                    if (rc.data.length() > 0 && (rc.data.charAt(0) == '{' || rc.data.indexOf("{") != -1)) {
+                        // Processa se for dados concatenados ou mensagem única
+                        if (rc.data.indexOf("}{") != -1) {
+                            // Dados concatenados - usar extração múltipla
+                            std::vector<ReceivedData> extractedList = extractMultipleJSONs(rc.data);
+                            for (size_t i = 0; i < extractedList.size(); i++) {
+                                dataList.push_back(extractedList[i]);
+                            }
+                        } else {
+                            // Mensagem única - parsing direto
+                            ReceivedData parsedData;
+                            if (parseJSON(rc.data, parsedData) == 0) {
+                                dataList.push_back(parsedData);
+                                Serial.println("✅ Mensagem #" + String(messageCount) + " processada!");
+                            } else {
+                                Serial.println("❌ Erro no parse da mensagem #" + String(messageCount));
+                            }
+                        }
+                        
+                        // Reset do timeout - continua coletando se há mais dados
+                        startTime = millis();
+                    } else {
+                        Serial.println("⚠️  Dados recebidos não são JSON válido, ignorando mensagem #" + String(messageCount));
+                    }
+                } else {
+                    Serial.println("❌ Erro na recepção da mensagem #" + String(messageCount));
+                }
+            }
+            delay(50); // Pequeno delay para dar tempo às mensagens chegarem
+        }
+        
+        Serial.println("\n📋 RESUMO DA COLETA:");
+        Serial.println("📨 Mensagens LoRa processadas: " + String(messageCount));
+        Serial.println("✅ JSONs válidos coletados: " + String(dataList.size()));
+        Serial.println("⏱️  Tempo de coleta: " + String(millis() - startTime + COLLECT_TIMEOUT) + "ms");
+    }
+    
+    return dataList;
 }
 
 int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
@@ -175,6 +304,114 @@ int LoRaReceiver::parseJSON(const String &jsonData, ReceivedData &data) {
     }
     
     return 0;
+}
+
+std::vector<ReceivedData> LoRaReceiver::extractMultipleJSONs(const String &rawData) {
+    std::vector<ReceivedData> dataList;
+    Serial.println("\n🔍 Extraindo múltiplos JSONs da mensagem...");
+    Serial.println("Dados brutos (" + String(rawData.length()) + " chars): " + rawData);
+    
+    // Primeiro, vamos limpar caracteres de controle mais agressivamente
+    String cleanData = "";
+    for (int i = 0; i < rawData.length(); i++) {
+        char c = rawData.charAt(i);
+        // Mantém apenas caracteres imprimíveis ASCII e alguns específicos do JSON
+        if ((c >= 32 && c <= 126) || c == '\n' || c == '\r' || c == '\t') {
+            cleanData += c;
+        }
+    }
+    
+    Serial.println("Dados limpos (" + String(cleanData.length()) + " chars): " + cleanData);
+    
+    // Estratégia mais robusta: usar regex-like para encontrar padrões
+    int pos = 0;
+    int jsonCount = 0;
+    
+    while (pos < cleanData.length()) {
+        // Procura pelo padrão {"id":"TR-001" mais específico
+        int start = cleanData.indexOf("{\"id\":\"TR-001\"", pos);
+        if (start == -1) {
+            // Se não encontrar o padrão específico, tenta o genérico
+            start = cleanData.indexOf("{\"id\":", pos);
+            if (start == -1) break;
+        }
+        
+        // Encontra a próxima ocorrência de {"id": para saber onde termina este JSON
+        int nextJsonStart = cleanData.indexOf("{\"id\":", start + 1);
+        
+        // Extrai o JSON considerando o próximo início ou fim da string
+        String possibleJson;
+        if (nextJsonStart == -1) {
+            // É o último JSON
+            possibleJson = cleanData.substring(start);
+        } else {
+            // Há outro JSON depois
+            possibleJson = cleanData.substring(start, nextJsonStart);
+        }
+        
+        // Agora procura por um JSON válido dentro desta substring
+        int braceCount = 0;
+        int jsonEnd = -1;
+        
+        for (int i = 0; i < possibleJson.length(); i++) {
+            char c = possibleJson.charAt(i);
+            if (c == '{') {
+                braceCount++;
+            } else if (c == '}') {
+                braceCount--;
+                if (braceCount == 0) {
+                    jsonEnd = i;
+                    break;
+                }
+            }
+        }
+        
+        if (jsonEnd != -1) {
+            String jsonString = possibleJson.substring(0, jsonEnd + 1);
+            jsonCount++;
+            
+            Serial.println("\n📄 JSON #" + String(jsonCount) + " extraído:");
+            Serial.println("   Posição: " + String(start) + " - " + String(start + jsonEnd));
+            Serial.println("   Conteúdo: " + jsonString);
+            Serial.println("   Tamanho: " + String(jsonString.length()) + " chars");
+            
+            // Valida se parece com um JSON válido antes de tentar parse
+            if (jsonString.indexOf("\"id\":") != -1 && 
+                jsonString.indexOf("\"hr\":") != -1 && 
+                jsonString.indexOf("\"ox\":") != -1 && 
+                jsonString.indexOf("\"temp\":") != -1) {
+                
+                ReceivedData data;
+                if (parseJSON(jsonString, data) == 0) {
+                    dataList.push_back(data);
+                    Serial.println("   ✅ Processado e adicionado com sucesso!");
+                } else {
+                    Serial.println("   ❌ Parse falhou");
+                }
+            } else {
+                Serial.println("   ⚠️  JSON incompleto, pulando...");
+            }
+            
+            pos = start + jsonEnd + 1;
+        } else {
+            // Se não conseguir encontrar fim válido, avança
+            pos = start + 1;
+        }
+        
+        // Proteção contra loop infinito
+        if (pos <= start) {
+            Serial.println("⚠️  Proteção contra loop infinito ativada");
+            break;
+        }
+    }
+    
+    Serial.println("\n📊 Resultado final da extração:");
+    Serial.println("   Tamanho original: " + String(rawData.length()) + " chars");
+    Serial.println("   Tamanho limpo: " + String(cleanData.length()) + " chars");
+    Serial.println("   JSONs encontrados: " + String(jsonCount));
+    Serial.println("   JSONs válidos: " + String(dataList.size()));
+    
+    return dataList;
 }
 
 

@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <LoRa_E32.h>
 #include <ArduinoJson.h>
+#include <vector>
 
 // Definições de pinos para E32
 #define LORA_RX_PIN 16
@@ -35,11 +36,13 @@ public:
     LoRaReceiver();
     bool initLoRa();
     ReceivedData listenForData();
-    void printConfiguration(); // Novo método para debug
+    std::vector<ReceivedData> listenForMultipleData();
+    void printConfiguration();
     
     private:
     void configureLoRaModule();
     int parseJSON(const String &jsonData, ReceivedData &data);
+    std::vector<ReceivedData> extractMultipleJSONs(const String &rawData);
 };
 
 #endif

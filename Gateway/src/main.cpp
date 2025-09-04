@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <vector>
 #include "lora.h"
 #include "network.h"
 
@@ -50,13 +51,12 @@ void loop() {
         return;
     }
     
-    // [ETAPA 1] Escuta dados via LoRa
-    ReceivedData receivedData = loraReceiver.listenForData();
+    // [ETAPA 1] Escuta dados via LoRa - agora processa múltiplos dados
+    std::vector<ReceivedData> receivedDataList = loraReceiver.listenForMultipleData();
 
-    // Se dados válidos foram recebidos (qualquer campo diferente de zero)
-    if (!receivedData.device_id.isEmpty() && 
-        (receivedData.heart_rate != 0 || receivedData.oxygen_level != 0 || receivedData.temperature != 0.0)) {
-        Serial.println("\n[ETAPA 2] Dados válidos recebidos!");
+    // Se dados válidos foram recebidos
+    if (!receivedDataList.empty()) {
+        Serial.println("\n[ETAPA 2] " + String(receivedDataList.size()) + " conjunto(s) de dados válidos recebidos!");
         
         // Pisca LED para indicar recepção
         blinkLED(3, 300);
@@ -67,14 +67,42 @@ void loop() {
         if (networkManager.connectWiFi()) {
             Serial.println("✅ WiFi conectado!");
          
-            // [ETAPA 4] Envia dados para API
-            Serial.println("\n[ETAPA 4] Enviando dados para API...");
-         
-            if (networkManager.sendDataToAPI(receivedData)) {
-                Serial.println("\n✅ SUCESSO: Dados enviados para API!");
+            // [ETAPA 4] Envia todos os dados para API
+            Serial.println("\n[ETAPA 4] Enviando " + String(receivedDataList.size()) + " conjunto(s) de dados para API...");
+            
+            int successCount = 0;
+            int errorCount = 0;
+            
+            for (size_t i = 0; i < receivedDataList.size(); i++) {
+                ReceivedData currentData = receivedDataList[i];
+                
+                Serial.println("\n--- ENVIANDO DADOS #" + String(i + 1) + " ---");
+                Serial.println("Device ID: " + currentData.device_id);
+                Serial.println("Heart Rate: " + String(currentData.heart_rate) + " BPM");
+                Serial.println("Oxygen Level: " + String(currentData.oxygen_level) + "%");
+                Serial.println("Temperature: " + String(currentData.temperature) + "°C");
+                
+                if (networkManager.sendDataToAPI(currentData)) {
+                    Serial.println("✅ Dados #" + String(i + 1) + " enviados com sucesso!");
+                    successCount++;
+                } else {
+                    Serial.println("❌ Erro no envio dos dados #" + String(i + 1));
+                    errorCount++;
+                }
+                
+                // Pequeno delay entre envios para não sobrecarregar a API
+                delay(500);
+            }
+            
+            Serial.println("\n📊 RESUMO DO ENVIO:");
+            Serial.println("✅ Sucessos: " + String(successCount));
+            Serial.println("❌ Erros: " + String(errorCount));
+            Serial.println("📦 Total processado: " + String(receivedDataList.size()));
+            
+            if (successCount > 0) {
                 blinkLED(5, 100); // LED rápido = sucesso
-            } else {
-                Serial.println("\n❌ ERRO: Falha no envio para API!");
+            }
+            if (errorCount > 0) {
                 blinkLED(10, 50); // LED muito rápido = erro
             }
            
