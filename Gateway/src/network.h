@@ -16,7 +16,7 @@
 #define WIFI_PASSWORD "CONFIGURE_NO_PLATFORMIO_INI"
 #endif
 #ifndef API_ENDPOINT
-#define API_ENDPOINT "https://api.vitalsync.com/data"
+#define API_ENDPOINT "https://localhost/vitals"
 #endif
 #ifndef API_KEY
 #define API_KEY "CONFIGURE_IN_PLATFORMIO_INI"
