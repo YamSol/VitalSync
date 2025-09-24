@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <LoRa_E32.h>
-
 #include <ArduinoJson.h>
 #include "sensors.h"
 
@@ -23,24 +22,35 @@
 #define TRANSMITTER_ADDH 0x00  // Endereço alto do Transmitter
 #define TRANSMITTER_ADDL 0x02  // Endereço baixo do Transmitter (0x0002)
 
-
 class LoRaManager {
 private:
     HardwareSerial loraHardwareSerial;
     LoRa_E32 e32ttl;
     bool isInitialized;
+    bool isPowered;
     
 public:
     LoRaManager();
     bool initLoRa();
+    void powerOn();
+    void powerOff();
+    bool sendAllData();  // Novo método integrado com WebSocket
+    
+    // Métodos mantidos para compatibilidade
     bool sendSensorData(const SensorData &data);
     void shutdownLoRa();
+    
+    // Estado do LoRa
+    bool isReady() const { return isInitialized && isPowered; }
     
 private:
     void configureLoRaModule();
     void printConfiguration();
     String createJSON(const SensorData &data);
+    String createCompactPayload();  // Novo método para payload otimizado
     bool sendMessage(const String &message);
+    int getRSSI();  // Simulated RSSI reading
+    float getSNR(); // Simulated SNR reading
 };
 
 #endif

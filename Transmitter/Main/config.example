@@ -1,0 +1,40 @@
+# Configuração do VitalSync Transmitter
+
+# PIN de segurança (6 dígitos)
+DEVICE_PIN=123456
+
+# Nome do dispositivo
+DEVICE_NAME=VitalSync-TX-001
+
+# Prefixo do SSID (será VitalSync-XXXX onde XXXX vem do MAC)
+SSID_PREFIX=VitalSync
+
+# Parâmetros de amostragem
+MAX_SAMPLES=50
+OXI_INTERVAL_MS=30
+TEMP_INTERVAL_MS=50
+
+# Timeouts (ms)
+SESSION_TTL_MS=300000
+SENSOR_TIMEOUT_MS=5000
+LORA_TIMEOUT_MS=4000
+
+# Rate limiting
+RATE_LIMIT_WINDOW_MS=1000
+MAX_COMMANDS_PER_WINDOW=2
+
+# Pino de controle LoRa (apenas LoRa pode ser desligado)
+LORA_POWER_PIN=22
+
+# Configurações LoRa
+LORA_CHANNEL=23
+LORA_POWER=20
+LORA_DATA_RATE=2.4
+
+# Gateway LoRa
+GATEWAY_ADDH=0x00
+GATEWAY_ADDL=0x01
+
+# Transmitter LoRa
+TRANSMITTER_ADDH=0x00
+TRANSMITTER_ADDL=0x02

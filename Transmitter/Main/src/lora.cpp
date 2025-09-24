@@ -1,20 +1,178 @@
 #include "lora.h"
+#include "websocket_manager.h"
 
-LoRaManager::LoRaManager() : loraHardwareSerial(2), e32ttl(&loraHardwareSerial, LORA_AUX_PIN, LORA_M0_PIN, LORA_M1_PIN), isInitialized(false) {
+LoRaManager::LoRaManager() : loraHardwareSerial(2), e32ttl(&loraHardwareSerial, LORA_AUX_PIN, LORA_M0_PIN, LORA_M1_PIN), isInitialized(false), isPowered(false) {
     // Construtor
 }
 
-bool LoRaManager::initLoRa() {
+void LoRaManager::powerOn() {
+    // Ligar alimentação do LoRa
+    digitalWrite(LORA_POWER_PIN, HIGH);
+    delay(100); // Aguarda estabilização
+    
+    Serial.println("[LORA] Ligando módulo LoRa...");
+    
+    // Inicializar comunicação serial e módulo
     loraHardwareSerial.begin(9600, SERIAL_8N1, LORA_RX_PIN, LORA_TX_PIN);
+    delay(100);
+    
     e32ttl.begin();
+    delay(200);
     
     configureLoRaModule();
-    
-    
     printConfiguration();
     
+    isPowered = true;
     isInitialized = true;
-    return true;
+    
+    Serial.println("[LORA] Módulo LoRa inicializado e pronto");
+}
+
+void LoRaManager::powerOff() {
+    if (isPowered) {
+        digitalWrite(LORA_POWER_PIN, LOW);
+        isPowered = false;
+        isInitialized = false;
+        Serial.println("[LORA] Módulo LoRa desligado");
+    }
+}
+
+bool LoRaManager::sendAllData() {
+    if (!isReady()) {
+        Serial.println("[LORA] ERRO: Módulo não está pronto");
+        wsManager.reportError("LORA_NOT_READY", "Módulo LoRa não inicializado");
+        return false;
+    }
+    
+    Serial.println("[LORA] Iniciando envio de dados...");
+    
+    // Criar payload compacto com todos os dados
+    String payload = createCompactPayload();
+    
+    if (payload.length() == 0) {
+        wsManager.reportError("LORA_PAYLOAD_ERROR", "Falha ao criar payload");
+        return false;
+    }
+    
+    if (payload.length() > 58) {
+        Serial.printf("[LORA] ERRO: Payload muito grande (%d bytes)\n", payload.length());
+        wsManager.reportError("LORA_PAYLOAD_SIZE", "Payload excede limite de 58 bytes");
+        return false;
+    }
+    
+    Serial.printf("[LORA] Enviando payload (%d bytes): %s\n", payload.length(), payload.c_str());
+    
+    // Tentar envio com retry
+    bool success = false;
+    int attempts = 2;
+    
+    for (int i = 0; i < attempts && !success; i++) {
+        if (i > 0) {
+            Serial.printf("[LORA] Tentativa %d/%d\n", i + 1, attempts);
+            delay(1000);
+        }
+        
+        ResponseStatus rs = e32ttl.sendFixedMessage(GATEWAY_ADDH, GATEWAY_ADDL, CHANNEL, payload);
+        success = (rs.code == 1);
+        
+        if (!success) {
+            Serial.printf("[LORA] Falha no envio: %s\n", rs.getResponseDescription().c_str());
+        }
+    }
+    
+    // Simular métricas (em um sistema real, isso viria do módulo LoRa)
+    int rssi = getRSSI();
+    float snr = getSNR();
+    
+    if (success) {
+        Serial.printf("[LORA] Dados enviados com sucesso! RSSI: %d, SNR: %.1f\n", rssi, snr);
+    } else {
+        Serial.println("[LORA] Falha no envio após todas as tentativas");
+    }
+    
+    // Reportar resultado
+    wsManager.reportLoRaResult(success, rssi, snr);
+    
+    return success;
+}
+
+String LoRaManager::createCompactPayload() {
+    TimestampedOxiData* oxiBuffer = wsManager.getOxiBuffer();
+    TimestampedTempData* tempBuffer = wsManager.getTempBuffer();
+    int oxiCount = wsManager.getOxiCount();
+    int tempCount = wsManager.getTempCount();
+    
+    if (oxiCount == 0 && tempCount == 0) {
+        Serial.println("[LORA] ERRO: Nenhum dado para enviar");
+        return "";
+    }
+    
+    // Criar payload JSON otimizado
+    DynamicJsonDocument doc(1024);
+    
+    // Metadados
+    doc["id"] = TRANSMITTER_ID;
+    doc["v"] = 1; // versão do payload
+    doc["ts"] = millis();
+    
+    // Dados do oxímetro (apenas últimas amostras válidas para economizar espaço)
+    if (oxiCount > 0) {
+        JsonArray oxi = doc.createNestedArray("o");
+        
+        // Enviar no máximo as últimas 5 amostras válidas
+        int start = max(0, oxiCount - 5);
+        for (int i = start; i < oxiCount; i++) {
+            if (oxiBuffer[i].valid) {
+                JsonArray sample = oxi.createNestedArray();
+                sample.add(oxiBuffer[i].bpm);
+                sample.add(oxiBuffer[i].spo2);
+                // Omitir IR/RED para economizar espaço
+            }
+        }
+    }
+    
+    // Dados de temperatura (média das últimas 10 amostras)
+    if (tempCount > 0) {
+        float tempSum = 0;
+        int validCount = 0;
+        
+        int start = max(0, tempCount - 10);
+        for (int i = start; i < tempCount; i++) {
+            if (tempBuffer[i].valid) {
+                tempSum += tempBuffer[i].temperature;
+                validCount++;
+            }
+        }
+        
+        if (validCount > 0) {
+            doc["t"] = round((tempSum / validCount) * 10) / 10.0; // 1 decimal
+        }
+    }
+    
+    // Serializar
+    String payload;
+    serializeJson(doc, payload);
+    
+    Serial.printf("[LORA] Payload criado: %s (%d bytes)\n", payload.c_str(), payload.length());
+    return payload;
+}
+
+int LoRaManager::getRSSI() {
+    // Em um sistema real, isso viria do módulo LoRa
+    // Por agora, simular valores típicos
+    return random(-120, -70);
+}
+
+float LoRaManager::getSNR() {
+    // Em um sistema real, isso viria do módulo LoRa
+    // Por agora, simular valores típicos
+    return random(-10, 15) + (random(0, 10) / 10.0);
+}
+
+// Método legado mantido para compatibilidade
+bool LoRaManager::initLoRa() {
+    powerOn();
+    return isReady();
 }
 
 bool LoRaManager::sendSensorData(const SensorData &data) {
@@ -37,12 +195,10 @@ bool LoRaManager::sendSensorData(const SensorData &data) {
 }
 
 void LoRaManager::shutdownLoRa() {
-    isInitialized = false;
-    Serial.println("Módulo LoRa desligado!");
+    powerOff();
 }
 
 String LoRaManager::createJSON(const SensorData &data) {
-    
     // Cria documento JSON COMPACTO (máximo 58 bytes)
     JsonDocument doc;
     
@@ -114,11 +270,6 @@ void LoRaManager::configureLoRaModule()
 }
 
 void LoRaManager::printConfiguration() {
-    // if (!isInitialized) {
-    //     Serial.println("Módulo LoRa não inicializado!");
-    //     return;
-    // }
-    
     ResponseStructContainer c = e32ttl.getConfiguration();
     if (c.status.code == 1) {
         Configuration configuration = *(Configuration*) c.data;
