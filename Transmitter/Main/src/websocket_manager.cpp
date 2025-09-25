@@ -23,7 +23,7 @@ WebSocketManager::WebSocketManager() :
     config.device_pin = "123456";
     config.device_name = "VitalSync-TX";
     config.ssid_prefix = "VitalSync";
-    config.max_samples = 50;
+    config.max_samples = 10;
     config.oxi_interval_ms = 30;
     config.temp_interval_ms = 50;
     config.firmware_version = "1.0.0";

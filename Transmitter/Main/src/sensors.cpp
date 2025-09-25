@@ -54,52 +54,30 @@ bool SensorManager::readOximeterSequence(int count) {
     
     Serial.printf("[SENSORS] Iniciando leitura de %d amostras do oxímetro\n", count);
     
-    
     TimestampedOxiData* buffer = wsManager.getOxiBuffer();
-    const SystemConfig& config = wsManager.getConfig();
-    
     int successful_readings = 0;
     
     for (int i = 0; i < count; i++) {
-        uint32_t start_time = millis();
-        bool reading_valid = false;
-        int attempts = 0;
-        const int max_attempts = 5;
+        SensorData data;
         
-        while (!reading_valid && attempts < max_attempts) {
-            pox.update();
-            delay(config.oxi_interval_ms);
-            
-            uint8_t hr = (uint8_t)pox.getHeartRate();
-            uint8_t spo2 = (uint8_t)pox.getSpO2();
-
-            Serial.printf("[DEBUG][SENSORS] Amostra %d: HR=%d BPM, SpO2=%d%%\n", i + 1, hr, spo2);
-
-            // Validar leitura
-            if (hr >= 40 && hr <= 200 && spo2 >= 70 && spo2 <= 100) {
-                buffer[successful_readings].timestamp = millis();
-                buffer[successful_readings].bpm = hr; 
-                buffer[successful_readings].spo2 = spo2;
-                buffer[successful_readings].valid = true;
-                
-                reading_valid = true;
-                successful_readings++;
-            } else {
-                attempts++;
-                delay(20);
-            }
-        }
+        // Usar a função original que funciona
+        readOximeter(data);
         
-        if (!reading_valid) {
-            Serial.printf("[SENSORS] TIMEOUT na amostra %d do oxímetro\n", i + 1);
-            // Continua mesmo com falha para não abortar toda a sequência
-        }
+        // Validar leitura usando a função original de validação
+
+        buffer[successful_readings].timestamp = millis();
+        buffer[successful_readings].bpm = (uint8_t)data.heart_rate;
+        buffer[successful_readings].spo2 = (uint8_t)data.oxygen_level;
+        buffer[successful_readings].valid = true;
+        successful_readings++;
+        
+        Serial.printf("[SENSORS] Amostra %d: HR=%d BPM, SpO2=%d%%\n", i + 1, data.heart_rate, data.oxygen_level);
         
         // Reportar progresso
         wsManager.reportOximeterProgress(i + 1, count);
         
         // Pequena pausa entre leituras
-        delay(10);
+        delay(100);
     }
     
     Serial.printf("[SENSORS] Leitura oxímetro concluída: %d/%d amostras válidas\n", successful_readings, count);
