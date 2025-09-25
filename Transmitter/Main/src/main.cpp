@@ -57,6 +57,7 @@ void setup() {
     // Inicializar gerenciador de sensores
     Serial.println("[SETUP] Inicializando sensores...");
     if (!sensorManager.initSensors()) {
+    // if(false) {
         Serial.println("[SETUP] ERRO: Falha ao inicializar sensores");
         while (true) {
             digitalWrite(LED_BUILTIN, HIGH);
@@ -65,7 +66,7 @@ void setup() {
             delay(100);
         }
     }
-    Serial.println("[SETUP] Sensores inicializados com sucesso");
+    // Serial.println("[SETUP] Sensores inicializados com sucesso");
     
     // Inicializar WebSocket Manager
     Serial.println("[SETUP] Inicializando WebSocket...");
@@ -221,6 +222,7 @@ void sensorReadTask(void *parameters) {
     bool success = false;
     
     if (strcmp(sensorType, "oximeter") == 0) {
+        sensorManager.readOximeterSequence(50); // Leitura de 50 amostras para estabilização
         success = sensorManager.readOximeterSequence(config.max_samples);
     } else if (strcmp(sensorType, "temperature") == 0) {
         success = sensorManager.readTemperatureSequence(config.max_samples);

@@ -44,36 +44,6 @@ bool SensorManager::initSensors() {
     return true;
 }
 
-bool SensorManager::stabilizeOximeter() {
-    Serial.println("[SENSORS] Aguardando estabilização do oxímetro...");
-    
-    SensorData tempData;
-    int stable_readings = 0;
-    int max_attempts = 300; // 30 segundos máximo
-    
-    for (int i = 0; i < max_attempts; i++) {
-        pox.update();
-        
-        if (pox.getHeartRate() > 50 && pox.getSpO2() > 70) {
-            stable_readings++;
-            if (stable_readings >= 10) {
-                Serial.println("[SENSORS] Oxímetro estabilizado");
-                return true;
-            }
-        } else {
-            stable_readings = 0;
-        }
-        
-        delay(100);
-        
-        if (i % 50 == 0) { // Log a cada 5 segundos
-            Serial.printf("[SENSORS] Estabilizando... (%d/%d)\n", i, max_attempts);
-        }
-    }
-    
-    Serial.println("[SENSORS] TIMEOUT: Oxímetro não estabilizou");
-    return false;
-}
 
 bool SensorManager::readOximeterSequence(int count) {
     if (!sensors_initialized) {
@@ -84,11 +54,6 @@ bool SensorManager::readOximeterSequence(int count) {
     
     Serial.printf("[SENSORS] Iniciando leitura de %d amostras do oxímetro\n", count);
     
-    // Estabilizar o oxímetro primeiro
-    if (!stabilizeOximeter()) {
-        wsManager.reportError("SENSOR_TIMEOUT", "Oxímetro não estabilizou");
-        return false;
-    }
     
     TimestampedOxiData* buffer = wsManager.getOxiBuffer();
     const SystemConfig& config = wsManager.getConfig();
@@ -107,11 +72,13 @@ bool SensorManager::readOximeterSequence(int count) {
             
             uint8_t hr = (uint8_t)pox.getHeartRate();
             uint8_t spo2 = (uint8_t)pox.getSpO2();
-            
+
+            Serial.printf("[DEBUG][SENSORS] Amostra %d: HR=%d BPM, SpO2=%d%%\n", i + 1, hr, spo2);
+
             // Validar leitura
             if (hr >= 40 && hr <= 200 && spo2 >= 70 && spo2 <= 100) {
                 buffer[successful_readings].timestamp = millis();
-                buffer[successful_readings].bpm = hr;
+                buffer[successful_readings].bpm = hr; 
                 buffer[successful_readings].spo2 = spo2;
                 buffer[successful_readings].valid = true;
                 
@@ -179,17 +146,11 @@ bool SensorManager::readTemperatureSequence(int count) {
             uint32_t voltage_mV = esp_adc_cal_raw_to_voltage((uint32_t)leituraADC, &adc_chars);
             float tensao = voltage_mV / 1000.0;
             float temperaturaC = tensao * 100; // Para LM35
-            
-            // Validar temperatura (range razoável para corpo humano)
-            if (temperaturaC >= 30.0 && temperaturaC <= 45.0) {
-                buffer[successful_readings].timestamp = millis();
-                buffer[successful_readings].temperature = temperaturaC;
-                buffer[successful_readings].valid = true;
-                
-                successful_readings++;
-            } else {
-                Serial.printf("[SENSORS] Temperatura fora do range: %.1f°C\n", temperaturaC);
-            }
+            buffer[successful_readings].timestamp = millis();
+            buffer[successful_readings].temperature = temperaturaC;
+            buffer[successful_readings].valid = true;
+            successful_readings++;
+            Serial.printf("[SENSORS] Amostra %d: %.2f °C\n", i + 1, temperaturaC);
         } else {
             Serial.printf("[SENSORS] Falha na leitura ADC da amostra %d\n", i + 1);
         }

@@ -95,7 +95,7 @@ bool WebSocketManager::init() {
 <body>
     <div class="container">
         <h1>🩺 VitalSync Transmitter</h1>
-        <p><strong>ATENÇÃO:</strong> Arquivo /data/index.html não encontrado!</p>
+        <p><strong>ATENÇÃO:</strong> Arquivo /index.html não encontrado!</p>
         <p>Para usar a interface completa, execute:</p>
         <pre>pio run --target uploadfs</pre>
         <p>Sistema funcionando apenas via WebSocket direto em <code>/ws</code></p>
