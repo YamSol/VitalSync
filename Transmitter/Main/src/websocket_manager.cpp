@@ -107,6 +107,10 @@ bool WebSocketManager::init() {
         }
     });
     
+    server.on("/reset", HTTP_POST, [this](AsyncWebServerRequest *request) {
+        this->handleReset(request);
+    });
+    
     server.begin();
     Serial.println("[WS] Servidor HTTP iniciado");
     
@@ -518,4 +522,10 @@ void WebSocketManager::reportLoRaResult(bool success, int rssi, float snr) {
 void WebSocketManager::reportError(const String& code, const String& detail) {
     setState(STATE_ERROR);
     sendError(code, detail);
+}
+
+void WebSocketManager::handleReset(AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Reiniciando o dispositivo...");
+    delay(500);  // Small delay to ensure the response is sent
+    ESP.restart();
 }

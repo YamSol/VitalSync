@@ -339,6 +339,31 @@
             font-size: 14px;
         }
         
+        .reset-button {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .reset-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .reset-button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
         @media (max-width: 600px) {
             body {
                 padding: 10px;
@@ -444,6 +469,8 @@
             </div>
             <div class="log" id="log"></div>
         </div>
+        
+        <button class="reset-button" onclick="resetDevice()">Reiniciar Dispositivo</button>
     </div>
     
     <script>
@@ -671,6 +698,36 @@
             document.getElementById('deviceInfo').classList.add('hidden');
             document.getElementById('authSection').classList.remove('hidden');
             document.getElementById('controlSection').classList.add('hidden');
+        }
+        
+        function resetApp() {
+            log('🔄 Reiniciando aplicativo...', 'info');
+            resetSession();
+            clearLog();
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinInput').focus();
+        }
+        
+        function resetDevice() {
+            if (confirm('Tem certeza que deseja reiniciar o dispositivo?')) {
+                fetch('/reset', {
+                    method: 'POST',
+                })
+                .then(response => {
+                    if (response.ok) {
+                        alert('Dispositivo está reiniciando...');
+                        setTimeout(() => {
+                            window.location.reload();
+                        }, 5000); // Reload page after 5 seconds
+                    } else {
+                        alert('Erro ao tentar reiniciar o dispositivo');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erro:', error);
+                    alert('Erro ao tentar reiniciar o dispositivo');
+                });
+            }
         }
         
         function sendCommand(cmd) {

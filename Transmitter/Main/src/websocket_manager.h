@@ -122,6 +122,7 @@ public:
     
     // Configurações
     const SystemConfig& getConfig() const { return config; }
+    void handleReset(AsyncWebServerRequest *request);
 };
 
 // Instância global
