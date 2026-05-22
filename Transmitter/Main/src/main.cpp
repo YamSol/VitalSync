@@ -3,14 +3,17 @@
  * Sistema de monitoramento remoto para pacientes crônicos
  * 
  * # Fluxo da aplicação
- * 1. Recebeu comando "ler e enviar dados" do tablet
+ * 1. Recebeu comando "iniciando" do tablet
  * 2. Liga sensores
- * 3. Lê os sensores N vezes e armazenar num buffer
- * 4. Desliga sensores
- * 5. Liga o módulo LoRa
- * 6. Envia os dados via LoRa
- * 7. Desliga o módulo LoRa
- * 8. Aguarda próximo comando do tablet
+ * 3. Recebeu comando "ler oximetro" do tablet
+ * 4. Lê o oximetro 50 vezes e armazenar num buffer (struct(SensorData))
+ * 5. Recebeu comando "ler temperatura" do tablet
+ * 6. Lê a temperatura 50 vezes e armazenar no mesmo buffer
+ * 7. Desliga sensores
+ * 8. Recebeu comando "enviar dados" do tablet
+ * 9. Liga o módulo LoRa
+ * 10. Envia os dados via LoRa
+ * 11. Desliga o módulo LoRa
  */
 
 #include <Arduino.h>
