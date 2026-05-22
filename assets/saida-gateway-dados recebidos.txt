@@ -1,0 +1,39 @@
+Rebooting...
+ets Jul 29 2019 12:21:46
+
+rst:0xc (SW_CPU_RESET),boot:0x12 (SPI_FAST_FLASH_BOOT)
+configsip: 0, SPIWP:0xee
+clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00
+mode:DIO, clock div:2
+load:0x3fff0030,len:1184
+load:0x40078000,len:13232
+load:0x40080400,len:3028
+entry 0x400805e4
+
+=
+🩺 VitalSync Gateway Iniciando...
+=
+
+[ETAPA 1] Inicializando módulo LoRa...
+Status da configuração: Success
+Configuração atual obtida com sucesso!
+Status da aplicação da configuração: Success
+Configurações aplicadas com sucesso!
+========== CONFIGURAÇÃO ATUAL ==========
+Endereço Alto (ADDH): 0
+Endereço Baixo (ADDL): 1
+Canal (CHAN): 23
+Taxa de dados do ar: 2.4 kbps
+Baud rate UART: 9600
+Potência de transmissão: 20 dBm
+========================================
+Módulo LoRa E32 inicializado com sucesso!
+✅ LoRa inicializado com sucesso!
+
+[GATEWAY] Sistema pronto - Modo escuta LoRa ativo
+Aguardando dados do Transmitter...
+
+
+[GATEWAY] Dados recebidos via LoRa!
+Status da recepção: Success
+Dados brutos recebidos: ��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}��␗{"id":"","hr":66,"ox":97,"temp":14.2}
